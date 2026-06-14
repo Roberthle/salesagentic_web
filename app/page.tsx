@@ -681,7 +681,7 @@ export default function LandingPage() {
                         </svg>
                     </Link>
                     <h1 className="headline" style={{ fontSize: '3rem', margin: '0 0 8px 0', background: 'linear-gradient(180deg, #fff 0%, #aaa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                        Sales Agentic AI
+                        Sale Agentic AI
                     </h1>
                     <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: '#00eeff', letterSpacing: '4px', textTransform: 'uppercase', margin: 0, textShadow: '0 0 8px rgba(0,238,255,0.3)' }}>
                         7 day pipeline builder
