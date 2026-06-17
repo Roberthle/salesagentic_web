@@ -368,24 +368,73 @@ export default function LandingPage() {
     const [whatYouSell, setWhatYouSell] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [trialSuccess, setTrialSuccess] = useState(false);
+    const [proSubscribed, setProSubscribed] = useState(false);
+    const [submittingPayment, setSubmittingPayment] = useState(false);
+    const [paymentError, setPaymentError] = useState<string | null>(null);
+    const [trialError, setTrialError] = useState<string | null>(null);
+    const [showTeaserModal, setShowTeaserModal] = useState(false);
+    const [weeklyDigest, setWeeklyDigest] = useState(true);
+    const [outreachDraft, setOutreachDraft] = useState<{ subject: string, body: string } | null>(null);
+    const [loadingOutreach, setLoadingOutreach] = useState(false);
 
     useEffect(() => {
         fetchLeads();
     }, []);
 
-    const fetchLeads = async () => {
+    useEffect(() => {
+        if (selectedLead && trialSuccess) {
+            const loadOutreach = async () => {
+                try {
+                    setLoadingOutreach(true);
+                    setOutreachDraft(null);
+                    const res = await fetch('/api/outreach', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            lead_id: selectedLead.id,
+                            domain: domain || 'amazon.com',
+                            what_you_sell: whatYouSell || 'B2B solutions'
+                        })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        setOutreachDraft(data);
+                    }
+                } catch (err) {
+                    console.error("Failed to load outreach draft:", err);
+                } finally {
+                    setLoadingOutreach(false);
+                }
+            };
+            loadOutreach();
+        } else {
+            setOutreachDraft(null);
+        }
+    }, [selectedLead, trialSuccess]);
+
+    const fetchLeads = async (whatYouSellVal?: string, audienceVal?: string) => {
         try {
             setLoading(true);
-            const res = await fetch('/api/feed');
+            const wSell = whatYouSellVal !== undefined ? whatYouSellVal : whatYouSell;
+            const aud = audienceVal !== undefined ? audienceVal : audience;
+            
+            let url = '/api/feed';
+            if (wSell || aud) {
+                url += `?what_you_sell=${encodeURIComponent(wSell)}&audience=${encodeURIComponent(aud)}`;
+            }
+            
+            const res = await fetch(url);
             if (res.ok) {
                 const data = await res.json();
                 setLeads(data);
                 if (data.length > 0) {
                     setSelectedLead(data[0]);
+                } else {
+                    setSelectedLead(null);
                 }
             }
-        } catch (e) {
-            console.error("Failed to load feed data:", e);
+        } catch (error) {
+            console.error("Failed to fetch leads:", error);
         } finally {
             setLoading(false);
         }
@@ -395,12 +444,13 @@ export default function LandingPage() {
         e.preventDefault();
         if (!domain || !audience || !email || !whatYouSell) return;
         setSubmitting(true);
+        setTrialError(null);
         try {
             // Call Stripe checkout session or simulate activation
             const res = await fetch('/api/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ domain, audience, email, what_you_sell: whatYouSell })
+                body: JSON.stringify({ domain, audience, email, what_you_sell: whatYouSell, weekly_digest: weeklyDigest })
             });
             if (res.ok) {
                 const data = await res.json();
@@ -409,14 +459,15 @@ export default function LandingPage() {
                     window.location.href = data.checkout_url;
                 } else {
                     setTrialSuccess(true);
+                    fetchLeads(whatYouSell, audience);
                 }
             } else {
-                // Fail-safe mock checkout if endpoint fails
-                setTrialSuccess(true);
+                const data = await res.json();
+                setTrialError(data.error || "Failed to activate trial.");
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setTrialSuccess(true);
+            setTrialError(err?.message || "An unexpected error occurred. Please try again.");
         } finally {
             setSubmitting(false);
         }
@@ -429,22 +480,25 @@ export default function LandingPage() {
         const targetAudience = `${assetVal} in ${stateVal}`;
         setAudience(targetAudience);
 
-        if (!domain || !email || !whatYouSell) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            alert("Please enter your Business Domain, What your business sells, and Work Email Address at the top of the page to unlock this lead's pipeline.");
-            const input = document.querySelector('input[placeholder="e.g. acmefinance.com"]') as HTMLInputElement;
-            if (input) {
-                setTimeout(() => input.focus(), 150);
+        if (!proSubscribed) {
+            const paymentSec = document.getElementById('payment-section');
+            if (paymentSec) {
+                paymentSec.scrollIntoView({ behavior: 'smooth' });
+                const domainInput = document.querySelector('#payment-section input[placeholder="e.g. amazon.com"]') as HTMLInputElement;
+                if (domainInput) {
+                    setTimeout(() => domainInput.focus(), 800);
+                }
             }
             return;
         }
 
         setSubmitting(true);
+        setTrialError(null);
         try {
             const res = await fetch('/api/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ domain, audience: targetAudience, email, what_you_sell: whatYouSell })
+                body: JSON.stringify({ domain, audience: targetAudience, email, what_you_sell: whatYouSell, weekly_digest: true })
             });
             if (res.ok) {
                 const data = await res.json();
@@ -452,18 +506,43 @@ export default function LandingPage() {
                     window.location.href = data.checkout_url;
                 } else {
                     setTrialSuccess(true);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    fetchLeads(whatYouSell, targetAudience);
                 }
             } else {
-                setTrialSuccess(true);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                const data = await res.json();
+                setTrialError(data.error || "Failed to unlock lead.");
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setTrialSuccess(true);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTrialError(err?.message || "An unexpected error occurred. Please try again.");
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handlePaymentSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmittingPayment(true);
+        setPaymentError(null);
+        try {
+            const res = await fetch('/api/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ domain, audience, email, what_you_sell: whatYouSell, weekly_digest: weeklyDigest })
+            });
+            if (res.ok) {
+                setProSubscribed(true);
+                setTrialSuccess(true);
+                fetchLeads(whatYouSell, audience);
+            } else {
+                const data = await res.json();
+                setPaymentError(data.error || "Failed to process payment.");
+            }
+        } catch (err: any) {
+            console.error(err);
+            setPaymentError(err?.message || "An unexpected error occurred during payment.");
+        } finally {
+            setSubmittingPayment(false);
         }
     };
 
@@ -474,10 +553,13 @@ export default function LandingPage() {
 
     return (
         <main className="landing-chassis">
-            <div className="hero-manifesto">
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '40px' }}>
+            <div className="hero-manifesto-container">
+                <div className="hero-bg-zoom"></div>
+                <div className="hero-bg-overlay"></div>
+                <div className="hero-manifesto">
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '40px' }}>
                     <Link href="/walkthrough" style={{ textDecoration: 'none', marginBottom: '15px' }}>
-                        <svg width="57" height="57" viewBox="0 0 34 34" id="logo-blueprint" style={{ overflow: 'visible', cursor: 'pointer', flexShrink: 0 }}>
+                        <svg width="114" height="114" viewBox="0 0 34 34" id="logo-blueprint" style={{ overflow: 'visible', cursor: 'pointer', flexShrink: 0 }}>
                             <defs>
                                 <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                                     <stop offset="0%" stopColor="#FFE082" />
@@ -681,33 +763,46 @@ export default function LandingPage() {
                         </svg>
                     </Link>
                     <h1 className="headline" style={{ fontSize: '3rem', margin: '0 0 8px 0', background: 'linear-gradient(180deg, #fff 0%, #aaa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                        Sale Agentic AI
+                        Sales Agentic AI
                     </h1>
                     <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: '#00eeff', letterSpacing: '4px', textTransform: 'uppercase', margin: 0, textShadow: '0 0 8px rgba(0,238,255,0.3)' }}>
                         7 day pipeline builder
                     </p>
                 </div>
-                <p className="sub-headline" style={{ fontSize: '1.2rem', color: '#bbb', marginTop: '10px' }}>
-                    No software installs. No complex configurations. Your automated sales partner.
+                <p className="sub-headline" style={{ fontSize: '1.2rem', color: '#cbd5e1', marginTop: '10px', textAlign: 'center' }}>
+                    All the work and research done so you don't have to.
                 </p>
 
                 {trialSuccess ? (
-                    <div className="trial-form-container trial-success-box">
+                    <div className="trial-form-container trial-success-box" style={{ margin: '-80px auto 0 0' }}>
                         <h3 style={{color: '#10b981', fontFamily: 'var(--font-mono)', fontSize: '1.2rem', marginBottom: '10px'}}>TRIAL ACTIVATED</h3>
-                        <p style={{color: '#aaa', fontSize: '0.95rem', lineHeight: '1.5'}}>
+                        <p style={{color: '#f1f5f9', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '10px'}}>
                             We have initiated your 7-day outbound sales pipeline sprint. Your custom AI outreach agents are assembling leads and drafting personalized copy. Check your inbox for the first batch of verified leads.
                         </p>
+                        {weeklyDigest && (
+                            <p style={{color: '#00eeff', fontSize: '0.8rem', fontWeight: 'bold', fontFamily: 'var(--font-mono)', borderTop: '1px dashed rgba(0,238,255,0.2)', paddingTop: '8px', marginTop: '8px'}}>
+                                [SUBSCRIBED] Weekly Lead Intelligence digest activated for: {email}
+                            </p>
+                        )}
                     </div>
                 ) : (
-                    <div className="trial-form-container">
+                    <div className="trial-form-container" style={{ margin: '-80px auto 0 0' }}>
                         <div className="trial-form-title">Launch Your 7-Day Outbound Trial</div>
+                        <div style={{ fontSize: '0.82rem', color: '#f1f5f9', marginTop: '-12px', marginBottom: '12px', lineHeight: '1.4' }}>
+                            Deploy dedicated, autonomous AI agents engineered to source leads, verify signal data, and scale your outbound pipeline 24/7.
+                        </div>
+                        {trialError && (
+                            <div style={{ color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.4)', padding: '10px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.1)', fontSize: '0.85rem', marginBottom: '15px', fontFamily: 'var(--font-mono)' }}>
+                                [ERROR] {trialError}
+                            </div>
+                        )}
                         <form className="trial-form" onSubmit={handleTrialSubmit}>
                             <div className="form-group">
                                 <label>Business Domain URL</label>
                                 <input 
                                     type="text" 
                                     className="trial-input" 
-                                    placeholder="e.g. acmefinance.com" 
+                                    placeholder="e.g. amazon.com" 
                                     value={domain} 
                                     onChange={(e) => setDomain(e.target.value)}
                                     required 
@@ -740,26 +835,39 @@ export default function LandingPage() {
                                 <input 
                                     type="email" 
                                     className="trial-input" 
-                                    placeholder="e.g. sales@acmefinance.com" 
+                                    placeholder="e.g. sales@amazon.com" 
                                     value={email} 
                                     onChange={(e) => setEmail(e.target.value)}
                                     required 
                                 />
                             </div>
+                            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', marginBottom: '15px' }}>
+                                <input 
+                                    type="checkbox" 
+                                    id="weekly-digest-chk"
+                                    checked={weeklyDigest}
+                                    onChange={(e) => setWeeklyDigest(e.target.checked)}
+                                    style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#00eeff' }}
+                                />
+                                <label htmlFor="weekly-digest-chk" style={{ margin: 0, fontSize: '0.75rem', color: '#cbd5e1', cursor: 'pointer', fontWeight: 'normal', textTransform: 'none' }}>
+                                    Subscribe to weekly lead intelligence digests (new capex triggers sent every Monday)
+                                </label>
+                            </div>
                             <button type="submit" className="trial-submit-btn" disabled={submitting}>
                                 {submitting ? "Assembling Pipeline..." : "Build My Sales Pipeline (Instant Activation)"}
                             </button>
-                            <div style={{fontSize: '0.65rem', color: '#666', marginTop: '10px', textAlign: 'center'}}>
+                            <div className="trial-disclaimer" style={{fontSize: '0.65rem', color: '#cbd5e1', marginTop: '10px', textAlign: 'center'}}>
                                 Instant Sandbox Activation. No credit card required. Cancel anytime.
                             </div>
                         </form>
                     </div>
                 )}
             </div>
+            </div>
 
             {/* Dashboard and Leads Registry */}
             <div className="console-lower">
-                <div style={{textAlign: 'right', marginBottom: '10px', fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: '#888', letterSpacing: '1.5px', paddingRight: '15px', width: '100%'}}>
+                <div style={{textAlign: 'right', marginBottom: '10px', fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: '#cbd5e1', letterSpacing: '1.5px', paddingRight: '15px', width: '100%'}}>
                     <span style={{color:'#6366f1', fontWeight: 'bold'}}>[INSTITUTIONAL SIGNAL LEDGER]</span> :: REAL-TIME CORPORATE CAPEX & PRIVATE DEBT LOGS
                 </div>
                 
@@ -769,21 +877,21 @@ export default function LandingPage() {
                         <button 
                             className={`secondary-cyber-btn ${filterType === 'all' ? 'active' : ''}`}
                             onClick={() => setFilterType('all')}
-                            style={{padding: '5px 15px', fontSize: '0.75rem', borderColor: filterType === 'all' ? '#00eeff' : '#555'}}
+                            style={{padding: '5px 15px', fontSize: '0.75rem', borderColor: filterType === 'all' ? '#00eeff' : 'rgba(255, 255, 255, 0.25)'}}
                         >
                             All Signals
                         </button>
                         <button 
                             className={`secondary-cyber-btn ${filterType === 'Contract Renewal' ? 'active' : ''}`}
                             onClick={() => setFilterType('Contract Renewal')}
-                            style={{padding: '5px 15px', fontSize: '0.75rem', borderColor: filterType === 'Contract Renewal' ? '#00eeff' : '#555'}}
+                            style={{padding: '5px 15px', fontSize: '0.75rem', borderColor: filterType === 'Contract Renewal' ? '#00eeff' : 'rgba(255, 255, 255, 0.25)'}}
                         >
                             Contract Renewals
                         </button>
                         <button 
                             className={`secondary-cyber-btn ${filterType === 'Capital Refinance' ? 'active' : ''}`}
                             onClick={() => setFilterType('Capital Refinance')}
-                            style={{padding: '5px 15px', fontSize: '0.75rem', borderColor: filterType === 'Capital Refinance' ? '#00eeff' : '#555'}}
+                            style={{padding: '5px 15px', fontSize: '0.75rem', borderColor: filterType === 'Capital Refinance' ? '#00eeff' : 'rgba(255, 255, 255, 0.25)'}}
                         >
                             Capital Refinancing
                         </button>
@@ -792,16 +900,16 @@ export default function LandingPage() {
                     <div className="registry-grid">
                         {/* Leads Feed Table */}
                         <div className="registry-table-card">
-                            <div style={{fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#fff', borderBottom: '1px solid #1a1a24', paddingBottom: '10px'}}>
-                                Live Intent Signals Feed
+                            <div style={{fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#fff', borderBottom: '1px solid rgba(255, 255, 255, 0.15)', paddingBottom: '10px'}}>
+                                {trialSuccess ? `Custom AI Outreach Leads (Matched to ${domain || 'Your Product'})` : 'Live Intent Signals Feed'}
                             </div>
                             <div className="registry-scroll">
                                 {loading ? (
-                                    <div style={{color: '#888', textAlign: 'center', marginTop: '50px', fontFamily: 'var(--font-mono)', fontSize: '0.9rem'}}>
+                                    <div style={{color: '#cbd5e1', textAlign: 'center', marginTop: '50px', fontFamily: 'var(--font-mono)', fontSize: '0.9rem'}}>
                                         Connecting to registry databases...
                                     </div>
                                 ) : filteredLeads.length === 0 ? (
-                                    <div style={{color: '#888', textAlign: 'center', marginTop: '50px', fontFamily: 'var(--font-mono)', fontSize: '0.9rem'}}>
+                                    <div style={{color: '#cbd5e1', textAlign: 'center', marginTop: '50px', fontFamily: 'var(--font-mono)', fontSize: '0.9rem'}}>
                                         No leads matched the selected criteria.
                                     </div>
                                 ) : (
@@ -816,7 +924,7 @@ export default function LandingPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {filteredLeads.map(lead => (
+                                            {filteredLeads.slice(0, proSubscribed ? 25 : 3).map(lead => (
                                                 <tr 
                                                     key={lead.id} 
                                                     className={`lead-row ${selectedLead?.id === lead.id ? 'selected' : ''}`}
@@ -834,13 +942,75 @@ export default function LandingPage() {
                                                     <td style={{fontFamily: 'var(--font-mono)', color: (lead.days_to_lapse ?? 999) <= 30 ? '#ff4a4a' : '#fff'}}>
                                                         {lead.days_to_lapse !== null ? `${lead.days_to_lapse}d left` : 'Active'}
                                                     </td>
-                                                    <td style={{fontSize: '0.75rem', color: '#888'}}>{lead.secured_party}</td>
+                                                    <td style={{fontSize: '0.75rem', color: '#cbd5e1'}}>{lead.secured_party}</td>
                                                 </tr>
                                             ))}
+                                            
+                                            {/* Locked Teaser Rows */}
+                                            {!proSubscribed && (
+                                                <>
+                                                    <tr className="locked-lead-row" onClick={() => setShowTeaserModal(true)}>
+                                                        <td><span className="badge badge-locked">[LOCKED]</span></td>
+                                                        <td><span className="badge badge-state">**</span></td>
+                                                        <td style={{fontWeight: 'bold', filter: 'blur(4px)', opacity: 0.6}}>Confidential Enterprise</td>
+                                                        <td style={{fontFamily: 'var(--font-mono)', filter: 'blur(4px)', opacity: 0.6}}>12d left</td>
+                                                        <td style={{filter: 'blur(4px)', opacity: 0.6}}>Institutional Funder</td>
+                                                    </tr>
+                                                    <tr className="locked-lead-row" onClick={() => setShowTeaserModal(true)}>
+                                                        <td><span className="badge badge-locked">[LOCKED]</span></td>
+                                                        <td><span className="badge badge-state">**</span></td>
+                                                        <td style={{fontWeight: 'bold', filter: 'blur(4px)', opacity: 0.6}}>Captive Lessee Inc.</td>
+                                                        <td style={{fontFamily: 'var(--font-mono)', filter: 'blur(4px)', opacity: 0.6}}>Active</td>
+                                                        <td style={{filter: 'blur(4px)', opacity: 0.6}}>Private Debt Syndicate</td>
+                                                    </tr>
+                                                    <tr className="locked-lead-row" onClick={() => setShowTeaserModal(true)}>
+                                                        <td><span className="badge badge-locked">[LOCKED]</span></td>
+                                                        <td><span className="badge badge-state">**</span></td>
+                                                        <td style={{fontWeight: 'bold', filter: 'blur(4px)', opacity: 0.6}}>Global Logistics Ltd</td>
+                                                        <td style={{fontFamily: 'var(--font-mono)', filter: 'blur(4px)', opacity: 0.6}}>28d left</td>
+                                                        <td style={{filter: 'blur(4px)', opacity: 0.6}}>Commercial Bank Group</td>
+                                                    </tr>
+                                                    {/* Lock Stats Info Row */}
+                                                    <tr className="locked-stats-row" onClick={() => {
+                                                        const paymentSec = document.getElementById('payment-section');
+                                                        if (paymentSec) {
+                                                            paymentSec.scrollIntoView({ behavior: 'smooth' });
+                                                            const domainInput = document.querySelector('#payment-section input[placeholder="e.g. amazon.com"]') as HTMLInputElement;
+                                                            if (domainInput) {
+                                                                setTimeout(() => domainInput.focus(), 800);
+                                                            }
+                                                        }
+                                                    }}>
+                                                        <td colSpan={5} style={{textAlign: 'center', padding: '15px 0', fontWeight: 'bold', color: '#00eeff', letterSpacing: '1px', fontSize: '0.8rem'}}>
+                                                            + 1,515 MORE DEALS DETECTED. CLICK HERE TO UNLOCK LIVE DATABASE.
+                                                        </td>
+                                                    </tr>
+                                                </>
+                                            )}
                                         </tbody>
                                     </table>
                                 )}
                             </div>
+
+                            {/* Pay Button below leads list */}
+                            {!proSubscribed && (
+                                <button 
+                                    className="trial-submit-btn" 
+                                    onClick={() => {
+                                        const paymentSec = document.getElementById('payment-section');
+                                        if (paymentSec) {
+                                            paymentSec.scrollIntoView({ behavior: 'smooth' });
+                                            const domainInput = document.querySelector('#payment-section input[placeholder="e.g. amazon.com"]') as HTMLInputElement;
+                                            if (domainInput) {
+                                                setTimeout(() => domainInput.focus(), 800);
+                                            }
+                                        }
+                                    }} 
+                                    style={{ marginTop: '15px', width: '100%', textTransform: 'uppercase', letterSpacing: '1.5px', fontSize: '0.75rem', fontWeight: 'bold' }}
+                                >
+                                    Sign Up & Pay to Unlock Live Database
+                                </button>
+                            )}
                         </div>
 
                         {/* Signal Detail Inspection Panel */}
@@ -922,11 +1092,11 @@ export default function LandingPage() {
                                                         <div className="detail-title" style={{ fontSize: '1.25rem', color: '#fff', fontWeight: 'bold' }}>
                                                             {lead.company_name}
                                                         </div>
-                                                        <div className="detail-meta" style={{ marginTop: '4px', color: '#888', fontSize: '0.75rem' }}>
+                                                        <div className="detail-meta" style={{ marginTop: '4px', color: '#cbd5e1', fontSize: '0.75rem' }}>
                                                             {lead.city}, {lead.state || lead.source_state} {lead.zipcode} * State Lien on Equipment
                                                         </div>
                                                     </div>
-                                                    <button onClick={() => setSelectedLead(null)} style={{ background: 'none', border: 'none', color: '#888', fontSize: '1.2rem', cursor: 'pointer' }}>
+                                                    <button onClick={() => setSelectedLead(null)} style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '1.2rem', cursor: 'pointer' }}>
                                                         [X]
                                                     </button>
                                                 </div>
@@ -942,7 +1112,7 @@ export default function LandingPage() {
                                                     <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: urgencyColor, marginBottom: '4px' }}>
                                                         {daysLabel.toUpperCase()}
                                                     </div>
-                                                    <div style={{ fontSize: '0.75rem', color: '#888', lineHeight: '1.4' }}>
+                                                    <div style={{ fontSize: '0.75rem', color: '#cbd5e1', lineHeight: '1.4' }}>
                                                         {urgencyContext}
                                                     </div>
                                                 </div>
@@ -964,7 +1134,7 @@ export default function LandingPage() {
                                                 <div className="intel-section">
                                                     <div className="intel-label">
                                                         [RISK] Est. Paydex
-                                                        <span style={{ fontSize: '0.55rem', color: '#666', marginLeft: '6px', textTransform: 'none' }}>
+                                                        <span style={{ fontSize: '0.55rem', color: '#94a3b8', marginLeft: '6px', textTransform: 'none' }}>
                                                             Signal-based * no D&B required
                                                         </span>
                                                     </div>
@@ -978,10 +1148,10 @@ export default function LandingPage() {
                                                             </div>
                                                         </div>
                                                         <div style={{ flex: 1 }}>
-                                                            <div style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1.4', marginBottom: '8px' }}>
+                                                            <div style={{ fontSize: '0.75rem', color: '#f1f5f9', lineHeight: '1.4', marginBottom: '8px' }}>
                                                                 {paydex.context}
                                                             </div>
-                                                            <div style={{ fontSize: '0.7rem', color: '#666', lineHeight: '1.6' }}>
+                                                            <div style={{ fontSize: '0.7rem', color: '#94a3b8', lineHeight: '1.6' }}>
                                                                 {paydex.rationale.map((r, i) => (
                                                                     <div key={i}>* {r}</div>
                                                                 ))}
@@ -1002,12 +1172,12 @@ export default function LandingPage() {
                                                                 {revenue.rv.label.toUpperCase()} * {revenue.rv.conf.toUpperCase()}
                                                             </div>
                                                         </div>
-                                                        <div style={{ flex: 1, fontSize: '0.75rem', color: '#888', lineHeight: '1.5', borderLeft: '1px solid #1a1a24', paddingLeft: '14px' }}>
+                                                        <div style={{ flex: 1, fontSize: '0.75rem', color: '#cbd5e1', lineHeight: '1.5', borderLeft: '1px solid rgba(255, 255, 255, 0.15)', paddingLeft: '14px' }}>
                                                             <div style={{ color: '#fff', fontWeight: 600, fontSize: '0.8rem', marginBottom: '4px' }}>
                                                                 Signal-based estimate — no D&B required
                                                             </div>
                                                             <div>{revenue.why || 'Based on state blanket lien collateral type and lender profile.'}</div>
-                                                            <div style={{ marginTop: '4px', fontSize: '0.65rem', color: '#444' }}>
+                                                            <div style={{ marginTop: '4px', fontSize: '0.65rem', color: '#94a3b8' }}>
                                                                 Accuracy improves with D&B integration. Use as conversation anchor, not gospel.
                                                             </div>
                                                         </div>
@@ -1072,6 +1242,76 @@ export default function LandingPage() {
                                                     </div>
                                                 </div>
 
+                                                {trialSuccess && (
+                                                    <>
+                                                        {/* Unlocked contact details */}
+                                                        <div className="intel-section">
+                                                            <div className="intel-label" style={{ color: '#00e5bf' }}>[UNLOCKED] Decision Maker Contact</div>
+                                                            <div className="intel-card" style={{ borderColor: 'rgba(0, 229, 191, 0.4)' }}>
+                                                                <div className="intel-row">
+                                                                    <span className="intel-key">Contact Person</span>
+                                                                    <span className="intel-val" style={{ color: '#fff', fontWeight: 'bold' }}>{lead.contact_name || 'Operations Director'}</span>
+                                                                </div>
+                                                                <div className="intel-row">
+                                                                    <span className="intel-key">Direct Email</span>
+                                                                    <span className="intel-val" style={{ color: '#00eeff', fontFamily: 'var(--font-mono)' }}>{lead.email}</span>
+                                                                </div>
+                                                                <div className="intel-row">
+                                                                    <span className="intel-key">Direct Phone</span>
+                                                                    <span className="intel-val" style={{ fontFamily: 'var(--font-mono)' }}>{lead.phone}</span>
+                                                                </div>
+                                                                <div className="intel-row">
+                                                                    <span className="intel-key">Company Website</span>
+                                                                    <span className="intel-val">
+                                                                        <a href={lead.company_website} target="_blank" rel="noopener noreferrer" style={{ color: '#fbbf24', textDecoration: 'underline' }}>
+                                                                            {lead.company_website}
+                                                                        </a>
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Unlocked Outreach Draft */}
+                                                        <div className="intel-section">
+                                                            <div className="intel-label">[OUTBOX] Custom AI Outreach Email</div>
+                                                            <div className="intel-card" style={{ padding: '15px', border: '1px solid rgba(0, 238, 255, 0.25)' }}>
+                                                                {loadingOutreach ? (
+                                                                    <div style={{ color: '#00eeff', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '10px 0' }}>
+                                                                        <div className="pulse-dot" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#00eeff', marginRight: '8px' }}></div>
+                                                                        AI Agent drafting customized pitch sequence...
+                                                                    </div>
+                                                                ) : outreachDraft ? (
+                                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
+                                                                        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px' }}>
+                                                                            <span style={{ color: '#94a3b8' }}>Subject: </span>
+                                                                            <span style={{ color: '#fff', fontWeight: 'bold' }}>{outreachDraft.subject}</span>
+                                                                        </div>
+                                                                        <div style={{ whiteSpace: 'pre-wrap', color: '#cbd5e1', lineHeight: '1.5', maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' }}>
+                                                                            {outreachDraft.body}
+                                                                        </div>
+                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px', marginTop: '5px' }}>
+                                                                            <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.7rem', fontWeight: 'bold' }}>
+                                                                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
+                                                                                QUEUED FOR DISPATCH
+                                                                            </span>
+                                                                            <button 
+                                                                                onClick={() => alert("Simulation Mode: Test email queued for dispatch. Checked delivery inbox in 5 minutes.")}
+                                                                                style={{ background: 'none', border: 'none', color: '#00eeff', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.7rem' }}
+                                                                            >
+                                                                                [Send Test Outreach]
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div style={{ color: '#cbd5e1', fontSize: '0.75rem', textAlign: 'center' }}>
+                                                                        Unable to draft pitch. Check your API configurations.
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
+
                                                 {/* Lender Intelligence */}
                                                 <div className="intel-section">
                                                     <div className="intel-label">[LENDER INTEL] Lender Intelligence</div>
@@ -1090,7 +1330,7 @@ export default function LandingPage() {
                                                             <div style={{ fontWeight: 'bold', fontSize: '0.8rem', color: '#10b981', marginBottom: '2px' }}>
                                                                 [OK] CONFIRMED STATE LIEN ON EQUIPMENT
                                                             </div>
-                                                            <div style={{ fontSize: '0.75rem', color: '#888' }}>
+                                                            <div style={{ fontSize: '0.75rem', color: '#cbd5e1' }}>
                                                                 Primary signal — verified public record
                                                             </div>
                                                         </div>
@@ -1101,7 +1341,7 @@ export default function LandingPage() {
                                                                 <span style={{ fontWeight: 'bold', fontSize: '0.8rem', color: '#3b82f6' }}>
                                                                     [HIRE] Actively Hiring
                                                                 </span>
-                                                                <span style={{ fontSize: '0.65rem', color: '#888' }}>via LinkedIn</span>
+                                                                <span style={{ fontSize: '0.65rem', color: '#cbd5e1' }}>via LinkedIn</span>
                                                             </div>
                                                             <div style={{ fontSize: '0.75rem', color: '#fff', marginBottom: '4px' }}>
                                                                 4 open positions found (Production Supervisor, Process Technician)
@@ -1114,26 +1354,26 @@ export default function LandingPage() {
                                                                 <span style={{ fontWeight: 'bold', fontSize: '0.8rem', color: '#fbbf24' }}>
                                                                     [REFI] Refinance Arbitrage
                                                                 </span>
-                                                                <span style={{ fontSize: '0.65rem', color: '#888' }}>Tier 2 OEM Captive</span>
+                                                                <span style={{ fontSize: '0.65rem', color: '#cbd5e1' }}>Tier 2 OEM Captive</span>
                                                             </div>
-                                                            <div style={{ fontSize: '0.75rem', color: '#aaa', marginBottom: '8px' }}>
+                                                            <div style={{ fontSize: '0.75rem', color: '#f1f5f9', marginBottom: '8px' }}>
                                                                 [UNLOCKED] Refinance savings matrix applied based on raw filing terms.
                                                             </div>
                                                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', fontSize: '0.75rem', borderTop: '1px dashed #1a1a24', paddingTop: '8px' }}>
                                                                 <div>
-                                                                    <div style={{ color: '#666', fontSize: '0.65rem', textTransform: 'uppercase' }}>Current APR Est.</div>
+                                                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Current APR Est.</div>
                                                                     <div style={{ color: '#fff', fontWeight: 'bold' }}>{currentAPREst}</div>
                                                                 </div>
                                                                 <div>
-                                                                    <div style={{ color: '#666', fontSize: '0.65rem', textTransform: 'uppercase' }}>Refi Target APR</div>
+                                                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Refi Target APR</div>
                                                                     <div style={{ color: '#10b981', fontWeight: 'bold' }}>{refiTargetAPR}</div>
                                                                 </div>
                                                                 <div>
-                                                                    <div style={{ color: '#666', fontSize: '0.65rem', textTransform: 'uppercase' }}>Monthly Savings</div>
+                                                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Monthly Savings</div>
                                                                     <div style={{ color: '#fff', fontWeight: 'bold' }}>${monthlySavings.toLocaleString()} / mo</div>
                                                                 </div>
                                                                 <div>
-                                                                    <div style={{ color: '#666', fontSize: '0.65rem', textTransform: 'uppercase' }}>Total Savings (Est.)</div>
+                                                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Total Savings (Est.)</div>
                                                                     <div style={{ color: '#10b981', fontWeight: 'bold' }}>${totalSavings.toLocaleString()}</div>
                                                                 </div>
                                                             </div>
@@ -1145,21 +1385,21 @@ export default function LandingPage() {
                                                                 <span style={{ fontWeight: 'bold', fontSize: '0.8rem', color: '#c084fc' }}>
                                                                     [GOVT] Govt Contract Won
                                                                 </span>
-                                                                <span style={{ fontSize: '0.65rem', color: '#888' }}>via SAM.gov / Bid Logs</span>
+                                                                <span style={{ fontSize: '0.65rem', color: '#cbd5e1' }}>via SAM.gov / Bid Logs</span>
                                                             </div>
-                                                            <div style={{ fontSize: '0.75rem', color: '#aaa', marginBottom: '4px' }}>
-                                                                <div style={{ color: '#666', fontSize: '0.65rem', textTransform: 'uppercase' }}>Contract Scope</div>
+                                                            <div style={{ fontSize: '0.75rem', color: '#f1f5f9', marginBottom: '4px' }}>
+                                                                <div style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Contract Scope</div>
                                                                 <div style={{ color: '#fff', fontWeight: '600' }}>
                                                                     Municipal greenfield drainage and concrete foundation upgrades.
                                                                 </div>
                                                             </div>
                                                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', fontSize: '0.75rem', marginTop: '6px' }}>
                                                                 <div>
-                                                                    <div style={{ color: '#666', fontSize: '0.65rem', textTransform: 'uppercase' }}>Awarding Agency</div>
+                                                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Awarding Agency</div>
                                                                     <div style={{ color: '#fff' }}>{lead.state || lead.source_state} Dept of Transportation</div>
                                                                 </div>
                                                                 <div>
-                                                                    <div style={{ color: '#666', fontSize: '0.65rem', textTransform: 'uppercase' }}>SAM Procurement ID</div>
+                                                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>SAM Procurement ID</div>
                                                                     <div style={{ color: '#fff', fontFamily: 'var(--font-mono)' }}>SAM-2026-{lead.id + 8172}</div>
                                                                 </div>
                                                             </div>
@@ -1171,21 +1411,21 @@ export default function LandingPage() {
                                                                 <span style={{ fontWeight: 'bold', fontSize: '0.8rem', color: '#fb923c' }}>
                                                                     [PERMIT] Facility Permit
                                                                 </span>
-                                                                <span style={{ fontSize: '0.65rem', color: '#888' }}>via Municipal Building Dept</span>
+                                                                <span style={{ fontSize: '0.65rem', color: '#cbd5e1' }}>via Municipal Building Dept</span>
                                                             </div>
-                                                            <div style={{ fontSize: '0.75rem', color: '#aaa', marginBottom: '4px' }}>
-                                                                <div style={{ color: '#666', fontSize: '0.65rem', textTransform: 'uppercase' }}>Renovation Details</div>
+                                                            <div style={{ fontSize: '0.75rem', color: '#f1f5f9', marginBottom: '4px' }}>
+                                                                <div style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Renovation Details</div>
                                                                 <div style={{ color: '#fff', fontWeight: '600' }}>
                                                                     Commercial building addition: extending industrial warehouse space by 12,500 sq ft.
                                                                 </div>
                                                             </div>
                                                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', fontSize: '0.75rem', marginTop: '6px' }}>
                                                                 <div>
-                                                                    <div style={{ color: '#666', fontSize: '0.65rem', textTransform: 'uppercase' }}>General Contractor</div>
+                                                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>General Contractor</div>
                                                                     <div style={{ color: '#fff' }}>Apex Builders LLC</div>
                                                                 </div>
                                                                 <div>
-                                                                    <div style={{ color: '#666', fontSize: '0.65rem', textTransform: 'uppercase' }}>Permit Number</div>
+                                                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Permit Number</div>
                                                                     <div style={{ color: '#fff', fontFamily: 'var(--font-mono)' }}>BP-2026-{lead.id + 10928}</div>
                                                                 </div>
                                                             </div>
@@ -1197,27 +1437,27 @@ export default function LandingPage() {
                                                                 <span style={{ fontWeight: 'bold', fontSize: '0.8rem', color: '#22d3ee' }}>
                                                                     [IMPORT] Overseas Cargo Import
                                                                 </span>
-                                                                <span style={{ fontSize: '0.65rem', color: '#888' }}>US Customs Registry</span>
+                                                                <span style={{ fontSize: '0.65rem', color: '#cbd5e1' }}>US Customs Registry</span>
                                                             </div>
                                                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', fontSize: '0.75rem' }}>
                                                                 <div style={{ gridColumn: 'span 2' }}>
-                                                                    <div style={{ color: '#666', fontSize: '0.65rem', textTransform: 'uppercase' }}>Cargo Manifest Items</div>
+                                                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Cargo Manifest Items</div>
                                                                     <div style={{ color: '#fff', fontWeight: '600' }}>3x Industrial Ventilation fans & motors</div>
                                                                 </div>
                                                                 <div>
-                                                                    <div style={{ color: '#666', fontSize: '0.65rem', textTransform: 'uppercase' }}>Shipper / Manufacturer</div>
+                                                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Shipper / Manufacturer</div>
                                                                     <div style={{ color: '#fff' }}>Yuan Dong Ltd.</div>
                                                                 </div>
                                                                 <div>
-                                                                    <div style={{ color: '#666', fontSize: '0.65rem', textTransform: 'uppercase' }}>Port of Origin</div>
+                                                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Port of Origin</div>
                                                                     <div style={{ color: '#fff' }}>Port of Kaohsiung, Taiwan</div>
                                                                 </div>
                                                                 <div>
-                                                                    <div style={{ color: '#666', fontSize: '0.65rem', textTransform: 'uppercase' }}>Gross Cargo Weight</div>
+                                                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Gross Cargo Weight</div>
                                                                     <div style={{ color: '#fff' }}>3,515 kg</div>
                                                                 </div>
                                                                 <div>
-                                                                    <div style={{ color: '#666', fontSize: '0.65rem', textTransform: 'uppercase' }}>Bill of Lading</div>
+                                                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Bill of Lading</div>
                                                                     <div style={{ color: '#fff', fontFamily: 'var(--font-mono)' }}>BOL-2026-{lead.id + 8192}</div>
                                                                 </div>
                                                             </div>
@@ -1230,7 +1470,7 @@ export default function LandingPage() {
                                                 <div className="intel-section">
                                                     <div className="intel-label">
                                                         [TIMELINE] Funding History
-                                                        <span style={{ fontSize: '0.55rem', color: '#666', marginLeft: '6px', textTransform: 'none' }}>
+                                                        <span style={{ fontSize: '0.55rem', color: '#94a3b8', marginLeft: '6px', textTransform: 'none' }}>
                                                             equipment lender escalation pattern
                                                         </span>
                                                     </div>
@@ -1238,7 +1478,7 @@ export default function LandingPage() {
                                                         <div className="sh-risk-badge" style={{ backgroundColor: 'rgba(251,191,36,0.08)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.25)', marginBottom: '12px' }}>
                                                             MODERATE RISK
                                                         </div>
-                                                        <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '12px' }}>
+                                                        <div style={{ fontSize: '0.75rem', color: '#cbd5e1', marginBottom: '12px' }}>
                                                             avg cycle: 899d | 3 equipment financings across 3 lender(s). Current: Equipment Finance Co.
                                                         </div>
                                                         
@@ -1259,7 +1499,7 @@ export default function LandingPage() {
                                                                 <div className="sh-line"></div>
                                                                 <div style={{ fontSize: '0.75rem', paddingLeft: '8px' }}>
                                                                     <div style={{ fontWeight: 'bold', color: '#fff' }}>LEAF CAPITAL FUNDING, LLC</div>
-                                                                    <div style={{ color: '#888', marginTop: '2px' }}>
+                                                                    <div style={{ color: '#cbd5e1', marginTop: '2px' }}>
                                                                         {prevFilingYear1}-04-27 * Equipment Financing (lender: LEAF CAPITAL FUNDING, LLC) * LAPSED 16d
                                                                     </div>
                                                                 </div>
@@ -1280,7 +1520,7 @@ export default function LandingPage() {
                                                                 <div className="sh-dot" style={{ color: '#fbbf24', borderColor: '#fbbf24' }}>B</div>
                                                                 <div style={{ fontSize: '0.75rem', paddingLeft: '8px' }}>
                                                                     <div style={{ fontWeight: 'bold', color: '#fff' }}>MARLIN LEASING CORP</div>
-                                                                    <div style={{ color: '#888', marginTop: '2px' }}>
+                                                                    <div style={{ color: '#cbd5e1', marginTop: '2px' }}>
                                                                         {nextFilingYear}-03-31 * Equipment Financing (lender: MARLIN LEASING CORP) * +1761d
                                                                     </div>
                                                                 </div>
@@ -1294,7 +1534,7 @@ export default function LandingPage() {
                                                 <div className="intel-section">
                                                     <div className="intel-label">
                                                         [LEGAL] Court & Regulatory
-                                                        <span style={{ fontSize: '0.55rem', color: '#666', marginLeft: '6px', textTransform: 'none' }}>
+                                                        <span style={{ fontSize: '0.55rem', color: '#94a3b8', marginLeft: '6px', textTransform: 'none' }}>
                                                             CourtListener * CFPB * EPA * OSHA
                                                         </span>
                                                     </div>
@@ -1303,7 +1543,7 @@ export default function LandingPage() {
                                                             <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#34d399' }}>
                                                                 [CLEAR] CLEAR — Legal
                                                             </span>
-                                                            <span style={{ fontSize: '0.7rem', color: '#666' }}>swept in 2.96s</span>
+                                                            <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>swept in 2.96s</span>
                                                         </div>
                                                         <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
                                                             <span className="cr-badge court">CourtListener</span>
@@ -1311,7 +1551,7 @@ export default function LandingPage() {
                                                             <span className="cr-badge epa">EPA ECHO</span>
                                                             <span className="cr-badge osha">OSHA</span>
                                                         </div>
-                                                        <div style={{ fontSize: '0.75rem', color: '#aaa' }}>
+                                                        <div style={{ fontSize: '0.75rem', color: '#f1f5f9' }}>
                                                             [OK] No adverse court or regulatory records found across 4 sources.
                                                         </div>
                                                     </div>
@@ -1321,12 +1561,12 @@ export default function LandingPage() {
                                                 <div className="intel-section">
                                                     <div className="intel-label">
                                                         [NEWS] Market Intelligence
-                                                        <span style={{ fontSize: '0.55rem', color: '#666', marginLeft: '6px', textTransform: 'none' }}>
+                                                        <span style={{ fontSize: '0.55rem', color: '#94a3b8', marginLeft: '6px', textTransform: 'none' }}>
                                                             live multi-source sweep
                                                         </span>
                                                     </div>
                                                     <div className="intel-card">
-                                                        <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '10px' }}>
+                                                        <div style={{ fontSize: '0.75rem', color: '#cbd5e1', marginBottom: '10px' }}>
                                                             [OK] 7 articles swept — Bing News * Google News — 1.15s
                                                         </div>
                                                         
@@ -1346,7 +1586,7 @@ export default function LandingPage() {
                                                                 <div style={{ color: '#fff', fontWeight: 600 }}>
                                                                     Inline Plastics Closing Michigan Manufacturing Plant - PlasticsToday
                                                                 </div>
-                                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', color: '#666', fontSize: '0.65rem' }}>
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', color: '#94a3b8', fontSize: '0.65rem' }}>
                                                                     <span>Google News</span>
                                                                     <a href={`https://www.google.com/search?q=Inline+Plastics+Closing+Michigan+Manufacturing+Plant`} target="_blank" rel="noopener noreferrer" style={{ color: '#fbbf24', textDecoration: 'underline' }}>
                                                                         Read [-&gt;]
@@ -1358,7 +1598,7 @@ export default function LandingPage() {
                                                                 <div style={{ color: '#fff', fontWeight: 600 }}>
                                                                     Inline Plastics closing Michigan plant, cutting 25 jobs - Plastics News
                                                                 </div>
-                                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', color: '#666', fontSize: '0.65rem' }}>
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', color: '#94a3b8', fontSize: '0.65rem' }}>
                                                                     <span>Google News</span>
                                                                     <a href={`https://www.google.com/search?q=Inline+Plastics+closing+Michigan+plant`} target="_blank" rel="noopener noreferrer" style={{ color: '#fbbf24', textDecoration: 'underline' }}>
                                                                         Read [-&gt;]
@@ -1370,7 +1610,7 @@ export default function LandingPage() {
                                                                 <div style={{ color: '#fff', fontWeight: 600 }}>
                                                                     U.S. plastics company to close Mid-Michigan facility in January - MLive.com
                                                                 </div>
-                                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', color: '#666', fontSize: '0.65rem' }}>
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', color: '#94a3b8', fontSize: '0.65rem' }}>
                                                                     <span>Google News</span>
                                                                     <a href={`https://www.google.com/search?q=U.S.+plastics+company+to+close+facility`} target="_blank" rel="noopener noreferrer" style={{ color: '#fbbf24', textDecoration: 'underline' }}>
                                                                         Read [-&gt;]
@@ -1384,15 +1624,21 @@ export default function LandingPage() {
 
                                             </div>
                                             
-                                            <button className="unlock-action-btn" onClick={() => handleDirectUnlock(lead)} style={{ marginTop: '16px' }}>
-                                                Build My Pipeline & Unlock Leads
-                                            </button>
+                                            {proSubscribed ? (
+                                                <div style={{ marginTop: '16px', padding: '10px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', color: '#10b981', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', textAlign: 'center', borderRadius: '4px', fontWeight: 'bold' }}>
+                                                    [ACTIVE] AUTOPILOT CAMPAIGN DEPLOYED FOR {lead.company_name.toUpperCase()}
+                                                </div>
+                                            ) : (
+                                                <button className="unlock-action-btn" onClick={() => handleDirectUnlock(lead)} style={{ marginTop: '16px' }}>
+                                                    Deploy Autopilot Campaign for {lead.company_name} ($125/mo)
+                                                </button>
+                                            )}
                                         </>
                                     );
                                 })()
                             ) : (
-                                <div style={{ color: '#888', textAlign: 'center', marginTop: '100px', fontFamily: 'var(--font-mono)', fontSize: '0.9rem' }}>
-                                    Select an intent signal from the feed to inspect verified triggers.
+                                <div style={{ color: '#cbd5e1', textAlign: 'center', marginTop: '100px', fontFamily: 'var(--font-mono)', fontSize: '0.9rem' }}>
+                                    Click on a company on the left to inspect verified triggers and customer intelligence.
                                 </div>
                             )}
                         </div>
@@ -1400,12 +1646,231 @@ export default function LandingPage() {
                 </div>
             </div>
 
+            {/* Bottom Signup & Payment Section */}
+            {/* Bottom Signup & Payment Section */}
+            <div id="payment-section" className="payment-chassis" style={{ width: '100%', maxWidth: '1200px', margin: '60px auto 0 auto', padding: '0 20px' }}>
+                <div style={{ textAlign: 'right', marginBottom: '10px', fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: '#cbd5e1', letterSpacing: '1.5px' }}>
+                    <span style={{ color: '#00eeff', fontWeight: 'bold' }}>[REGISTRATION & SECURE GATEWAY]</span> :: ACTIVATE AUTOMATED PIPELINE SPRINT
+                </div>
+                
+                {proSubscribed ? (
+                    <div className="trial-form-container trial-success-box" style={{ margin: '0 auto', maxWidth: '800px', background: 'rgba(55, 60, 75, 0.65)', border: '1px solid #10b981', borderTop: '3px solid #10b981' }}>
+                        <h3 style={{color: '#10b981', fontFamily: 'var(--font-mono)', fontSize: '1.2rem', marginBottom: '10px'}}>PRO SUBSCRIPTION ACTIVATED</h3>
+                        <p style={{color: '#f1f5f9', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '10px'}}>
+                            We have processed your payment and activated your Pro Outbound Campaign. Your custom AI outreach agents are assembling leads, running signal searches, and queueing outbound campaigns for dispatch.
+                        </p>
+                        {weeklyDigest && (
+                            <p style={{color: '#00eeff', fontSize: '0.8rem', fontWeight: 'bold', fontFamily: 'var(--font-mono)', borderTop: '1px dashed rgba(0,238,255,0.2)', paddingTop: '8px', marginTop: '8px'}}>
+                                [SUBSCRIBED] Weekly Lead Intelligence digest activated for: {email}
+                            </p>
+                        )}
+                    </div>
+                ) : (
+                    <div className="trial-form-container" style={{ margin: '0 auto', maxWidth: '800px', background: 'rgba(55, 60, 75, 0.65)', border: '1px solid rgba(255, 255, 255, 0.25)', borderTop: '2px solid #00eeff' }}>
+                        <div className="trial-form-title">Unlock Database & Launch Pro Outbound Campaign</div>
+                        <div style={{ fontSize: '0.85rem', color: '#cbd5e1', marginTop: '-12px', marginBottom: '20px', lineHeight: '1.4', textAlign: 'center' }}>
+                            Upgrade to Pro to unlock direct contacts, access the full 1,515+ leads database, and deploy autonomous outbound agents 24/7.
+                        </div>
+                        {paymentError && (
+                            <div style={{ color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.4)', padding: '10px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.1)', fontSize: '0.85rem', marginBottom: '15px', fontFamily: 'var(--font-mono)' }}>
+                                [ERROR] {paymentError}
+                            </div>
+                        )}
+                        <form className="trial-form" onSubmit={handlePaymentSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                            <div className="form-group">
+                                <label>Business Domain URL</label>
+                                <input 
+                                    type="text" 
+                                    className="trial-input" 
+                                    placeholder="e.g. amazon.com" 
+                                    value={domain} 
+                                    onChange={(e) => setDomain(e.target.value)}
+                                    required 
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Work Email Address</label>
+                                <input 
+                                    type="email" 
+                                    className="trial-input" 
+                                    placeholder="e.g. sales@amazon.com" 
+                                    value={email} 
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required 
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>What your business sells / Product Description</label>
+                                <input 
+                                    type="text" 
+                                    className="trial-input" 
+                                    placeholder="e.g. Fleet financing, commercial insurance, logistics software" 
+                                    value={whatYouSell} 
+                                    onChange={(e) => setWhatYouSell(e.target.value)}
+                                    required 
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Target Buyer Profile</label>
+                                <input 
+                                    type="text" 
+                                    className="trial-input" 
+                                    placeholder="e.g. Directors of Construction in Ohio" 
+                                    value={audience} 
+                                    onChange={(e) => setAudience(e.target.value)}
+                                    required 
+                                />
+                            </div>
+                            
+                            {/* Payment details */}
+                            <div className="form-group" style={{ gridColumn: 'span 2', borderTop: '1px dashed rgba(255,255,255,0.15)', paddingTop: '15px', marginTop: '10px' }}>
+                                <label style={{ color: '#00eeff', fontSize: '0.75rem', letterSpacing: '1.5px', fontFamily: 'var(--font-mono)' }}>SECURE PAYMENT METHOD ($125/MO)</label>
+                                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '10px', marginTop: '8px' }}>
+                                    <input 
+                                        type="text" 
+                                        className="trial-input" 
+                                        placeholder="Card Number" 
+                                        maxLength={19}
+                                        required 
+                                    />
+                                    <input 
+                                        type="text" 
+                                        className="trial-input" 
+                                        placeholder="MM/YY" 
+                                        maxLength={5}
+                                        required 
+                                    />
+                                    <input 
+                                        type="password" 
+                                        className="trial-input" 
+                                        placeholder="CVC" 
+                                        maxLength={4}
+                                        required 
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="form-group" style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px', marginBottom: '5px' }}>
+                                <input 
+                                    type="checkbox" 
+                                    id="weekly-digest-chk"
+                                    checked={weeklyDigest}
+                                    onChange={(e) => setWeeklyDigest(e.target.checked)}
+                                    style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#00eeff' }}
+                                />
+                                <label htmlFor="weekly-digest-chk" style={{ margin: 0, fontSize: '0.75rem', color: '#cbd5e1', cursor: 'pointer', fontWeight: 'normal', textTransform: 'none' }}>
+                                    Subscribe to weekly lead intelligence digests (new capex triggers sent every Monday)
+                                </label>
+                            </div>
+                            
+                            <button type="submit" className="trial-submit-btn" style={{ gridColumn: 'span 2' }} disabled={submittingPayment}>
+                                {submittingPayment ? "Processing Payment & Setting Up Outbound Engine..." : "Authorize Payment & Launch Campaign ($125/mo)"}
+                            </button>
+                            
+                            <div className="trial-disclaimer" style={{ gridColumn: 'span 2', fontSize: '0.65rem', color: '#cbd5e1', marginTop: '5px', textAlign: 'center' }}>
+                                Secure 256-bit SSL checkout. Cancel anytime.
+                            </div>
+                        </form>
+                    </div>
+                )}
+            </div>
+
+            {/* Weekly Lead Digest outbox */}
+            {trialSuccess && (
+                <div className="weekly-digest-section" style={{ width: '100%', maxWidth: '1200px', margin: '40px auto 0 auto', padding: '0 20px' }}>
+                    <div style={{ textAlign: 'right', marginBottom: '10px', fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: '#cbd5e1', letterSpacing: '1.5px' }}>
+                        <span style={{ color: '#00e5bf', fontWeight: 'bold' }}>[WEEKLY DISPATCH CENTER]</span> :: AUTOMATED INTEL DIGEST NEWSLETTER
+                    </div>
+                    <div className="glass-panel" style={{ padding: '24px', border: '1px solid rgba(255, 255, 255, 0.25)', borderTop: '2px solid #00e5bf', background: 'rgba(55, 60, 75, 0.65)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.15)', paddingBottom: '12px', marginBottom: '16px' }}>
+                            <div>
+                                <h3 style={{ fontSize: '1.05rem', color: '#fff', fontWeight: 'bold' }}>Weekly Lead Intelligence Digests</h3>
+                                <div style={{ fontSize: '0.75rem', color: '#cbd5e1', marginTop: '2px' }}>
+                                    We collect your verified emails and automatically dispatch matching new triggers every week.
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#00e5bf', boxShadow: '0 0 10px #00e5bf' }}></span>
+                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#00e5bf', fontWeight: 'bold' }}>SUBSCRIBED ({email})</span>
+                            </div>
+                        </div>
+
+                        <div className="digest-outbox-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr', gap: '24px' }}>
+                            {/* Subscriber info / Campaign configuration summary */}
+                            <div style={{ borderRight: '1px solid rgba(255,255,255,0.15)', paddingRight: '20px', fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '12px', color: '#cbd5e1' }}>
+                                <div>
+                                    <span style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Target Product</span>
+                                    <div style={{ color: '#fff', fontWeight: 600 }}>{whatYouSell}</div>
+                                </div>
+                                <div>
+                                    <span style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Target Geography / Audience</span>
+                                    <div style={{ color: '#fff', fontWeight: 600 }}>{audience || 'All States'}</div>
+                                </div>
+                                <div>
+                                    <span style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Subscription Status</span>
+                                    <div style={{ color: '#10b981', fontWeight: 'bold' }}>Active — Matching Leads Weekly</div>
+                                </div>
+                                <div style={{ marginTop: '10px' }}>
+                                    <button 
+                                        className="secondary-cyber-btn"
+                                        onClick={() => alert(`Email unsubscribed. You will no longer receive weekly digests at ${email}.`)}
+                                        style={{ fontSize: '0.65rem', padding: '5px 10px', borderColor: 'rgba(255, 74, 74, 0.4)', color: '#ff4a4a', backgroundColor: 'transparent', cursor: 'pointer' }}
+                                    >
+                                        Unsubscribe Email
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Dispatch Outbox log */}
+                            <div>
+                                <span style={{ color: '#fff', fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>Digest Dispatch Log</span>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem', color: '#cbd5e1' }}>
+                                    <thead>
+                                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
+                                            <th style={{ paddingBottom: '8px' }}>Mailing Cycle</th>
+                                            <th style={{ paddingBottom: '8px' }}>Matched Content</th>
+                                            <th style={{ paddingBottom: '8px' }}>Dispatch Date</th>
+                                            <th style={{ paddingBottom: '8px' }}>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <td style={{ padding: '8px 0', fontWeight: 'bold', color: '#fff' }}>Weekly Digest #1</td>
+                                            <td style={{ padding: '8px 0' }}>3 Matched Leads for {whatYouSell.split(' ')[0]}</td>
+                                            <td style={{ padding: '8px 0' }}>Next Monday, 8:00 AM</td>
+                                            <td style={{ padding: '8px 0' }}><span style={{ color: '#00eeff', fontWeight: 'bold' }}>[SCHEDULED]</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td style={{ padding: '8px 0', fontWeight: 'bold', color: '#fff' }}>Welcome Lead Digest</td>
+                                            <td style={{ padding: '8px 0' }}>Initial Setup Report</td>
+                                            <td style={{ padding: '8px 0' }}>Just Now (Simulated)</td>
+                                            <td style={{ padding: '8px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <span style={{ color: '#10b981', fontWeight: 'bold' }}>[DELIVERED]</span>
+                                                <button 
+                                                    onClick={() => {
+                                                        const matchedLeadNames = leads.map(l => l.company_name).join(', ');
+                                                        alert(`--- SIMULATED NEWSLETTER DIGEST SENT TO ${email} ---\n\nSubject: Welcome to SalesAgentic Matched Lead Ledger\n\nBody: We matched 3 companies for your product ("${whatYouSell}"):\n\n1. ${leads[0]?.company_name || 'Matched Company 1'} - Capex trigger: "${leads[0]?.collateral_desc || 'Lien'}"\n2. ${leads[1]?.company_name || 'Matched Company 2'} - Capex trigger: "${leads[1]?.collateral_desc || 'Lien'}"\n3. ${leads[2]?.company_name || 'Matched Company 3'} - Capex trigger: "${leads[2]?.collateral_desc || 'Lien'}"\n\nWe will scan and send your matching leads every Monday morning.\n\nBest,\nSalesAgentic Outbound Team`);
+                                                    }}
+                                                    style={{ background: 'none', border: 'none', color: '#00eeff', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.65rem', padding: 0 }}
+                                                >
+                                                    View Welcome Email
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Copy Manifesto Sections */}
             <div className="copy-container">
                 <section className="copy-section">
                     <h2 className="section-title">THE SATURATION PARADOX</h2>
                     <p className="content-p">
-                        Traditional B2B outbound prospecting is fundamentally broken. Blasting massive email databases (like Apollo or ZoomInfo) leads to high spam rates, low deliverability, and generic messaging. SaleAgentic shifts the paradigm by monitoring operational triggers in real-time, executing hyper-targeted outreach precisely when buying interest is highest.
+                        Traditional B2B outbound prospecting is fundamentally broken. Blasting massive email databases (like Apollo or ZoomInfo) leads to high spam rates, low deliverability, and generic messaging. SalesAgentic shifts the paradigm by monitoring operational triggers in real-time, executing hyper-targeted outreach precisely when buying interest is highest.
                     </p>
                 </section>
 
@@ -1421,7 +1886,7 @@ export default function LandingPage() {
                     </div>
 
                     <div className="compare-card live">
-                        <div className="compare-header">LIVE: SaleAgentic Auto-Pilot</div>
+                        <div className="compare-header">LIVE: SalesAgentic Auto-Pilot</div>
                         <ul className="compare-list">
                             <li><span className="check">✓</span> <b>Corporate Transaction Registry:</b> Real-time contract triggers and capital shifts</li>
                             <li><span className="check">✓</span> <b>Capital Filing Monitors:</b> Institutional expansion activity</li>
@@ -1434,18 +1899,19 @@ export default function LandingPage() {
                 <section className="copy-section stack-destroyer">
                     <h2 className="section-title text-center">THE COST OF OUTBOUND TECH</h2>
                     <p className="content-p text-center" style={{marginBottom:'30px'}}>
-                        Operating a modern sales prospecting stack requires database seats, domain warming platforms, copywriting agents, and continuous CRM operations. SaleAgentic replaces your entire sales stack in a single automated loop.
+                        Operating a modern sales prospecting stack requires database seats, domain warming platforms, copywriting agents, and continuous CRM operations. SalesAgentic replaces your entire sales stack in a single automated loop.
                     </p>
                     
                     <div className="roi-grid">
-                        <div className="roi-item"><span>Database Subscriptions (ZoomInfo/Lusha):</span> <span className="cost">$25,000 /yr</span></div>
-                        <div className="roi-item"><span>Outreach Orchestration Tools:</span> <span className="cost">$15,000 /yr</span></div>
-                        <div className="roi-item"><span>Email Verification & Deliverability Services:</span> <span className="cost">$5,000 /yr</span></div>
-                        <div className="roi-item"><span>Sales Ops & Domain Maintenance:</span> <span className="cost">$12,000 /yr</span></div>
+                        <div className="roi-item"><span>Database Subscriptions (ZoomInfo/Apollo):</span> <span className="cost">$25,000 /yr</span></div>
+                        <div className="roi-item"><span>Contact Enrichment Platforms (Clay/Clearbit):</span> <span className="cost">$12,000 /yr</span></div>
+                        <div className="roi-item"><span>Intent Signal Scrapers (Permits/Hiring/Customs):</span> <span className="cost">$18,000 /yr</span></div>
+                        <div className="roi-item"><span>Copywriting Software & LLM API Seats:</span> <span className="cost">$8,000 /yr</span></div>
+                        <div className="roi-item"><span>Sales Ops & CRM Maintenance:</span> <span className="cost">$12,000 /yr</span></div>
                     </div>
                     
                     <div className="roi-total">
-                        ELIMINATED OVERHEAD: <span className="big-money">$57,000+</span> / YEAR
+                        ELIMINATED OVERHEAD: <span className="big-money">$75,000+</span> / YEAR
                     </div>
                 </section>
 
@@ -1455,10 +1921,58 @@ export default function LandingPage() {
                         Due to the computing resources required to spin up dedicated domain pools and execute deep capital event checks, we limit signups to 3 new automated sales pipelines per week. 
                     </p>
                     <div className="footer-tagline">
-                        SALEAGENTIC: YOUR AUTOMATED SALES PARTNER.
+                        SALESAGENTIC: YOUR AUTOMATED SALES PARTNER.
                     </div>
                 </section>
             </div>
+
+            {/* Subscription Teaser Modal */}
+            {showTeaserModal && (
+                <div className="teaser-modal-overlay" onClick={() => setShowTeaserModal(false)}>
+                    <div className="teaser-modal-card" onClick={(e) => e.stopPropagation()}>
+                        <button className="teaser-modal-close" onClick={() => setShowTeaserModal(false)}>[X]</button>
+                        
+                        <div className="teaser-modal-header">
+                            <span className="teaser-modal-lock">[LOCKED]</span>
+                            <h2>UNLOCK 1,500+ ACTIVE CAPEX SIGNAL PROFILES</h2>
+                        </div>
+                        
+                        <div className="teaser-modal-body">
+                            <p className="teaser-intro">
+                                You are viewing a limited sandbox registry (25 accounts). Subscribers get real-time unfiltered access to state-wide equipment lien databases, capital filings, job boards, city building permits, and US Customs manifests.
+                            </p>
+                            
+                            <div className="premium-perks">
+                                <h3>WHAT IS INCLUDED IN PRO:</h3>
+                                <ul>
+                                    <li>- <b>Full Ledger Transparency:</b> Complete contact records, phone lines, email addresses, and permit numbers.</li>
+                                    <li>- <b>Autonomous Outbound Orchestration:</b> Multiagent campaigns configured to auto-draft & auto-dispatch pitch sequences referencing target permit IDs.</li>
+                                    <li>- <b>Dedicated Domain Pool Assembly:</b> Instant setup of custom domain warmups to safeguard your main mailbox deliverability.</li>
+                                </ul>
+                            </div>
+                            
+                            <div className="teaser-price">
+                                <b>SalesAgentic Pro Subscription:</b> <span className="price-tag">$125 / month</span>
+                            </div>
+
+                            <button className="teaser-subscribe-btn" onClick={() => {
+                                setShowTeaserModal(false);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                // Focus the first input field
+                                const input = document.querySelector('input[placeholder="e.g. amazon.com"]') as HTMLInputElement;
+                                if (input) {
+                                    setTimeout(() => input.focus(), 150);
+                                }
+                            }}>
+                                Activate My 7-Day Outbound Sprint
+                            </button>
+                            <p className="teaser-disclaimer">
+                                Start with our risk-free 7-day outbound trial. Autopopulates sandbox campaigns instantly. Cancel anytime.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </main>
     );
 }

@@ -4,21 +4,21 @@ import Link from 'next/link';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'System Logs Walkthrough | SaleAgentic.ai',
-  description: 'SaleAgentic system audit logs, implementation notes, and technical walkthrough.',
+  title: 'System Logs Walkthrough | SalesAgentic.ai',
+  description: 'SalesAgentic system audit logs, implementation notes, and technical walkthrough.',
   alternates: {
     canonical: '/walkthrough',
   },
   openGraph: {
-    title: 'System Logs Walkthrough | SaleAgentic.ai',
-    description: 'SaleAgentic system audit logs, implementation notes, and technical walkthrough.',
+    title: 'System Logs Walkthrough | SalesAgentic.ai',
+    description: 'SalesAgentic system audit logs, implementation notes, and technical walkthrough.',
     url: '/walkthrough',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'System Logs Walkthrough | SaleAgentic.ai',
-    description: 'SaleAgentic system audit logs, implementation notes, and technical walkthrough.',
+    title: 'System Logs Walkthrough | SalesAgentic.ai',
+    description: 'SalesAgentic system audit logs, implementation notes, and technical walkthrough.',
   },
 };
 

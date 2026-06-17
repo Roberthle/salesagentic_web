@@ -1,0 +1,244 @@
+:root {
+    --bg-primary: #2d2f33; /* Agate Grey */
+    --card-bg: #1e1f22;   /* Darker Grey Card */
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --accent-blue: #3b82f6;
+    --accent-red: #ef4444;
+    --accent-green: #10b981;
+    --gts-red: #e11d48;
+    --text-primary: #f4f4f5;
+    --text-secondary: #aaa;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-sans: 'Inter', sans-serif;
+}
+
+body {
+    font-family: var(--font-sans); background: var(--bg-primary); color: #fff;
+    min-height: 100vh; margin: 0; padding: 40px;
+}
+
+.dashboard-container { max-width: 1400px; margin: 0 auto; position: relative;}
+
+/* Rebuild the header... */
+.glass-header {
+    background: #09090b; border-bottom: 1px solid var(--glass-border);
+    padding: 20px 40px; border-radius: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;
+}
+h1 { font-weight: 800; font-size: 1.5rem; letter-spacing: -0.5px; margin:0;}
+h1 span { color: var(--gts-red); font-weight: 300; }
+.status-indicator { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--accent-green); text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem;}
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); }
+
+/* PORSCHE 5-DIAL INSTRUMENT CLUSTER */
+.porsche-5-dial-cluster {
+    display: flex; justify-content: center; align-items: center;
+    position: relative; height: 500px; margin-bottom: 40px; margin-top: 20px;
+    animation: slideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes slideDown { 0% { opacity: 0; transform: translateY(-20px); } 100% { opacity: 1; transform: translateY(0); } }
+
+/* Interlocking Dial Wrappers */
+.dial-wrapper {
+    position: relative; display: flex; justify-content: center; align-items: center;
+    border-radius: 50%; box-shadow: 0 15px 45px rgba(0,0,0,0.95), inset 0 0 10px rgba(255,255,255,0.05);
+    background: #060608; border: 3px solid #1a1a1f; 
+}
+.dial-center {
+    width: 440px; height: 440px; z-index: 10;
+    border: 4px solid #101014; box-shadow: 0 0 60px rgba(0,0,0,1), 0 20px 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.05); 
+}
+.dial-inner-left, .dial-inner-right {
+    width: 320px; height: 320px; z-index: 5;
+    margin-right: -40px; margin-left: -40px;
+}
+.dial-far-left, .dial-far-right {
+    width: 240px; height: 240px; z-index: 1;
+    margin-right: -30px; margin-left: -30px;
+}
+
+/* Base generic tach-outer-ring for standard black gauges */
+.tach-outer-ring {
+    width: 93%; height: 93%; border-radius: 50%; position: absolute;
+    border: 3px solid #222; box-shadow: inset 0 0 30px #000, 0 0 10px rgba(0,0,0,0.9);
+}
+/* Reused glass across all dial wrappers */
+.tach-glass {
+    position: absolute; width: 100%; height: 100%; border-radius: 50%;
+    background: radial-gradient(ellipse at 65% 25%, rgba(255,255,255,0.15) 0%, transparent 40%, rgba(0,0,0,0.8) 100%);
+    z-index: 20; pointer-events: none;
+}
+/* Overriding core sizes for smaller dials */
+.tach-core {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 250px; height: 250px; background: #060608; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5;
+    box-shadow: inset 0 0 40px #000, inset 0 0 80px rgba(0,0,0,0.8), 0 5px 15px rgba(0,0,0,0.9);
+}
+.dial-center .tach-core { box-shadow: inset 0 0 50px #000, 0 10px 30px rgba(0,0,0,0.9); color: #fff; border: 1px solid #111;}
+.dial-inner-left .tach-core, .dial-inner-right .tach-core { width: 220px; height: 220px; }
+.dial-far-left .tach-core, .dial-far-right .tach-core { width: 170px; height: 170px; border-width: 1px; box-shadow: inset 0 0 30px #000, 0 5px 10px rgba(0,0,0,0.8);}
+
+.dial-title { color: #888; text-transform: uppercase; letter-spacing: 2px; font-size: 0.7rem; margin-bottom: 20px;}
+.dial-title-sub { color: #888; font-size: 0.8rem; margin-top: 5px; font-weight: 800;}
+.dial-value { font-size: 1.5rem; font-weight: 700; color: #fff; font-family: var(--font-mono);}
+.dial-value-large { font-size: 2.8rem; font-weight: 600; color: #fff; font-family: var(--font-mono); line-height: 1;}
+
+.tach-needle-small {
+    position: absolute; left: 50%; top: 50%; 
+    width: 3px; height: 130px; background: #fff; 
+    margin-left: -1.5px; margin-top: -130px; 
+    transform-origin: bottom center; transform: rotate(-120deg);
+    z-index: 4; border-radius: 3px 3px 0 0;
+    transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Center Tach Core */
+.tach-bezel {
+    position: absolute; width: 93%; height: 93%; border-radius: 50%;
+    border: 1px solid #333; box-shadow: inset 0 0 15px rgba(0,0,0,0.9); z-index: 0;
+}
+.tach-ticks {
+    position: absolute; width: 100%; height: 100%; border-radius: 50%;
+    background: repeating-conic-gradient(from -140.5deg, #fff 0deg, #fff 1deg, transparent 1deg, transparent 35deg);
+    mask: radial-gradient(transparent 68%, black 69%, black 72%, transparent 73%);
+    -webkit-mask: radial-gradient(transparent 68%, black 69%, black 72%, transparent 73%);
+    z-index: 1; opacity: 0.9;
+}
+.tach-ticks-minor {
+    position: absolute; width: 100%; height: 100%; border-radius: 50%;
+    background: repeating-conic-gradient(from -140.25deg, #666 0deg, #666 0.5deg, transparent 0.5deg, transparent 7deg);
+    mask: radial-gradient(transparent 68.5%, black 69.5%, black 72%, transparent 73%);
+    -webkit-mask: radial-gradient(transparent 68.5%, black 69.5%, black 72%, transparent 73%);
+    z-index: 1; opacity: 0.6;
+}
+
+@keyframes revvingGTS { 0% { transform: rotate(-2deg); } 50% { transform: rotate(5deg); } 100% { transform: rotate(-1deg); } }
+.tach-ring.revving { animation: revvingGTS 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite alternate; }
+.tach-ring {
+    width: 100%; height: 100%; border-radius: 50%; position: relative;
+    background: conic-gradient(from -135deg, #222 0deg, #222 270deg, var(--gts-red) 270deg, var(--gts-red) 360deg);
+    mask: radial-gradient(transparent 65%, black 65%);
+    -webkit-mask: radial-gradient(transparent 65%, black 65%);
+    transition: transform 0.3s ease;
+}
+.tachometer-wrapper::before {
+    content: ""; position: absolute; width: 100%; height: 100%; border-radius: 50%;
+    background: radial-gradient(circle, transparent 65%, transparent 66%, var(--gts-red) 66%, var(--gts-red) 90%, #222 90%);
+}
+.tach-needle {
+    position: absolute; left: 50%; top: 50%; width: 6px; height: 180px; background: white; 
+    margin-left: -3px; margin-top: -180px; transform-origin: bottom center; transform: rotate(-140deg); 
+    box-shadow: 0 0 10px rgba(255,255,255,0.5); z-index: 4; border-radius: 5px 5px 0 0;
+    transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes vibrateNeedle { 0% { margin-left: -3.5px; } 100% { margin-left: -2.5px; } }
+.tach-needle.revving { background: var(--gts-red); box-shadow: 0 0 15px var(--gts-red); animation: vibrateNeedle 0.05s linear infinite alternate; }
+
+.tach-num {
+    position: absolute; left: 50%; top: 50%; transform-origin: 0 0; margin-left: -10px; margin-top: -15px; 
+    font-size: 1.5rem; font-weight: 800; color: #fff; z-index: 10;
+}
+.metric-value-huge { font-size: 3.5rem; font-family: var(--font-mono); line-height: 1; margin: 15px 0 5px 0;}
+.gts-unit { font-size: 0.8rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 2px;}
+
+.gts-gearbox { margin-top: 5px; font-weight: 800; font-size: 1.2rem; color: #666; display: flex; gap: 15px; justify-content: center;}
+.gear-mode { color: #fff; text-transform: uppercase;}
+.active-gear { color: #0ea5e9; font-size: 1.5rem;}
+
+.map-body { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 12px; border: 1px solid #333;}
+.us-map-bg {
+    width: 100%; height: 100%; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+}
+.map-point {
+    position: absolute; width: 6px; height: 6px; background: var(--gts-red); border-radius: 50%;
+    box-shadow: 0 0 10px var(--gts-red); animation: expandPulse 2s infinite;
+}
+@keyframes expandPulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(4); opacity: 0; } }
+
+/* Radar Pulsing Points */
+.pulse-container { position: absolute; width: 14px; height: 14px; margin-left: -7px; margin-top: -7px; pointer-events: none; }
+.pulse-point { width: 6px; height: 6px; margin: 4px; background: var(--gts-red); border-radius: 50%; box-shadow: 0 0 10px var(--gts-red); animation: pingRadar 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; }
+.pulse-point.phantom { background: #0ea5e9; box-shadow: 0 0 10px #0ea5e9; animation-duration: 3s; opacity: 0.5; }
+.pulse-label { position: absolute; left: 15px; top: -5px; color: #a1a1aa; font-family: var(--font-mono); font-size: 0.65rem; text-shadow: 1px 1px 2px #000; letter-spacing: 1px; white-space: nowrap; font-weight: 700; opacity: 0.8; }
+@keyframes pingRadar { 75%, 100% { transform: scale(3.5); opacity: 0; } }
+
+/* ============================================================== 
+   PORSCHE HARDWARE SWITCHBOARD 
+   ============================================================== */
+.porsche-switchboard-wrapper {
+    display: flex; justify-content: center; margin-top: 50px; margin-bottom: 20px;
+}
+.porsche-switchboard {
+    display: flex; align-items: flex-start;
+    background: linear-gradient(to bottom, #2b2b2b 0%, #1a1a1a 100%);
+    border: 1px solid #000; border-radius: 6px;
+    padding: 10px 10px 20px 10px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.95), inset 0 1px 1px rgba(255,255,255,0.15);
+}
+
+.chrome-guard {
+    width: 14px; height: 105px; border-radius: 6px; margin: 0 5px;
+    background: linear-gradient(to right, #4a4a4a 0%, #fff 20%, #ccc 50%, #fff 80%, #4a4a4a 100%);
+    box-shadow: 2px 0 5px rgba(0,0,0,0.8), -2px 0 5px rgba(0,0,0,0.8), inset 0 2px 10px rgba(255,255,255,0.9);
+    position: relative; z-index: 10;
+}
+
+.metal-switch-container {
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    width: 70px; position: relative; margin: 0 5px;
+}
+
+.switch-icon {
+    font-size: 0.55rem; color: #888; font-family: var(--font-mono); text-transform: uppercase;
+    font-weight: 800; text-shadow: inset 0 1px 1px #000; margin-top: 15px; 
+    text-align: center; line-height: 1.3;
+}
+
+.metal-switch-label {
+    position: relative; width: 60px; height: 60px;
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer; perspective: 400px; /* Crucial for realistic 3D toggle click */
+}
+
+.metal-switch-label input { display: none; }
+
+.metal-roller {
+    width: 48px; height: 42px; border-radius: 4px;
+    background: 
+      repeating-linear-gradient(45deg, rgba(0,0,0,0.3) 0, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 3px),
+      repeating-linear-gradient(-45deg, rgba(0,0,0,0.3) 0, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 3px),
+      linear-gradient(to bottom, #888 0%, #e0e0e0 25%, #bbb 50%, #fff 75%, #666 100%);
+    box-shadow: 0 10px 15px rgba(0,0,0,0.8), inset 0 2px 5px rgba(255,255,255,0.6);
+    transform-style: preserve-3d;
+    transform: rotateX(-20deg) translateY(-5px); /* UP state */
+    transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s;
+}
+
+.red-roller {
+     background: 
+      repeating-linear-gradient(45deg, rgba(0,0,0,0.4) 0, rgba(0,0,0,0.4) 1px, transparent 1px, transparent 3px),
+      repeating-linear-gradient(-45deg, rgba(0,0,0,0.4) 0, rgba(0,0,0,0.4) 1px, transparent 1px, transparent 3px),
+      linear-gradient(to bottom, #a11 0%, #e33 25%, #c22 50%, #f44 75%, #811 100%);
+}
+
+.metal-switch-label input:checked + .metal-roller {
+    transform: rotateX(25deg) translateY(5px); /* DOWN state */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.9), inset 0 -2px 5px rgba(255,255,255,0.2);
+}
+.bg-layout { display: flex; gap: 30px; margin-top: 50px; }
+.bg-left { flex: 2; height: 350px; }
+.bg-right { flex: 1; height: 350px; }
+
+.terminal-section { border-radius: 12px; border: 1px solid #1a1a1f; background: #060608; overflow: hidden; height: 100%; display: flex; flex-direction: column; }
+.terminal-header { background: #0b0b0e; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a1f; flex-shrink: 0;}
+.terminal-header h2 { font-family: var(--font-mono); margin:0; font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 2px; }
+.sys-logs { padding: 20px; font-family: var(--font-mono); font-size: 0.75rem; color: #a1a1aa; overflow-y: auto; flex: 1; display:flex; flex-direction:column; gap:5px;}
+.log-entry { margin-bottom: 5px; }
+
+/* Dynamic Log Coloring */
+.log-engine { color: #555; margin-right: 15px; font-weight: 800; display: inline-block; width: 120px;}
+.log-msg { color: #a1a1aa; }
+.log-msg.success { color: #10b981; text-shadow: 0 0 8px rgba(16,185,129,0.5); font-weight: 600;}
+.log-msg.error { color: #e11d48; text-shadow: 0 0 8px rgba(225,29,72,0.5); font-weight: 600;}
+.log-msg.highlight { color: #0ea5e9; font-weight: 700; }
+.log-msg.dim { color: #555; }

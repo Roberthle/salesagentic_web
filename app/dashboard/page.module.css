@@ -1,0 +1,162 @@
+.dashboardContainer {
+    width: 100vw;
+    min-height: 100vh;
+    padding: 2rem 4rem;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 2rem;
+    margin-bottom: 2rem;
+}
+
+.headerTitle {
+    color: var(--text-primary);
+    font-size: 1.8rem;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+.headerSubtitle {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.statusIndicator {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.statusIndicator::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--success-color);
+    border-radius: 50%;
+    margin-right: 8px;
+    box-shadow: 0 0 10px rgba(0, 229, 191, 0.5);
+}
+
+.agentGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.agentCard {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.agentHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.agentTitle {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.agentIcon {
+    color: var(--text-secondary);
+}
+
+.metricValue {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.2rem;
+    letter-spacing: -1px;
+}
+
+.metricLabel {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+.dashboardMain {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+}
+
+.dataFeed {
+    padding: 1.5rem;
+}
+
+.chartContainer {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.feedTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.feedTable th {
+    text-align: left;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.feedTable td {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid var(--border-subtle);
+    text-transform: uppercase;
+}
+
+.badgeNew {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+.badgeEnriched {
+    background: rgba(0, 112, 243, 0.1);
+    color: var(--highlight-color);
+    border-color: rgba(0, 112, 243, 0.2);
+}
+
+.badgeDrafted {
+    background: rgba(0, 229, 191, 0.1);
+    color: var(--success-color);
+    border-color: rgba(0, 229, 191, 0.2);
+}
