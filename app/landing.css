@@ -432,6 +432,49 @@ body {
 /* =========================================================
    CINEMATIC SCOUT-STYLE MANIFESTO SECTIONS
    ========================================================= */
+.cinematic-bg-video-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -2;
+    overflow: hidden;
+    pointer-events: none;
+    
+    /* Hardware-accelerated properties, dynamic scroll-ratio */
+    /* Start at 0.12 opacity, fade up to 0.40 as user scrolls through copy sections */
+    opacity: calc(0.12 + (var(--scroll-ratio, 0) * 0.28));
+    
+    /* Scale the video from 1.03 to 1.15 for depth zoom parallax */
+    transform: scale(calc(1.03 + (var(--scroll-ratio, 0) * 0.12)));
+    
+    /* Reveal mask that expands from central area on scroll */
+    clip-path: circle(calc(22vw + (var(--scroll-ratio, 0) * 68vw)) at 50% 50%);
+    
+    transition: opacity 0.15s cubic-bezier(0.16, 1, 0.3, 1), 
+                transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+                clip-path 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    
+    will-change: opacity, transform, clip-path;
+}
+
+#bg-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cinematic-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Dark grid vignette overlay */
+    background: radial-gradient(circle at center, rgba(16, 17, 20, 0.1) 0%, rgba(16, 17, 20, 0.95) 100%);
+    z-index: -1;
+}
 .cinematic-container {
     width: 100%;
     max-width: 1200px;

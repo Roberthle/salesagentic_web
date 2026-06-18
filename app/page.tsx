@@ -396,8 +396,32 @@ export default function LandingPage() {
         const sections = document.querySelectorAll('.cinematic-section');
         sections.forEach(section => observer.observe(section));
 
+        // High-performance scroll tracking for background video reveal
+        const handleScroll = () => {
+            const container = document.querySelector('.cinematic-container');
+            if (!container) return;
+            
+            const rect = container.getBoundingClientRect();
+            const viewHeight = window.innerHeight;
+            
+            const totalScrollable = rect.height + viewHeight;
+            const scrolledAmount = viewHeight - rect.top;
+            
+            let ratio = scrolledAmount / totalScrollable;
+            ratio = Math.max(0, Math.min(1, ratio)); // Clamp between 0 and 1
+            
+            const videoContainer = document.querySelector('.cinematic-bg-video-container') as HTMLElement;
+            if (videoContainer) {
+                videoContainer.style.setProperty('--scroll-ratio', ratio.toString());
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        handleScroll();
+
         return () => {
             sections.forEach(section => observer.unobserve(section));
+            window.removeEventListener('scroll', handleScroll);
         };
     }, []);
 
@@ -573,6 +597,17 @@ export default function LandingPage() {
 
     return (
         <main className="landing-chassis">
+            <div className="cinematic-bg-video-container">
+                <video 
+                    id="bg-video"
+                    autoPlay 
+                    muted 
+                    loop 
+                    playsInline 
+                    src="/static/bg_video.mp4"
+                />
+                <div className="cinematic-overlay"></div>
+            </div>
             <div className="hero-manifesto-container">
                 <div className="hero-bg-zoom"></div>
                 <div className="hero-bg-overlay"></div>
