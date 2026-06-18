@@ -294,6 +294,19 @@ I have refactored the lead inspection details panel on the sales agentic homepag
   * Rebuilt the comparison card as a single grid element containing obsolete and running-live sections separated by ultra-fine lines.
   * Restructured the ROI tech cost block into an elegant monospaced vertical ledger, including dashed connection leaders and a highlighted total row for eliminated overhead.
 
+---
+
+## 22. Cinematic Scroll-Responsive Background Video Reveal (June 18, 2026)
+
+* **Performance-First Background Video**:
+  * Integrated a highly optimized, loopable H.264 MP4 technology background video ([bg_video.mp4](file:///Users/robertle/salesagentic_web/public/static/bg_video.mp4)) served locally from `public/static/`.
+  * Utilized standard `autoplay muted loop playsinline` attributes on the HTML5 `<video>` tag to guarantee native, GPU-accelerated mobile and desktop playback without browser auto-play blocks.
+* **Scroll-Linked Zoom & Clip-Path Reveal**:
+  * Configured a passive scroll event handler inside `LandingPage` that calculates the user's scroll depth relative to the manifesto section.
+  * Feeds the progress ratio dynamically into a CSS custom variable `--scroll-ratio`.
+  * Styled `.cinematic-bg-video-container` to scale up smoothly from `1.03` to `1.15` (parallax zoom) and expand its visibility from `0.12` to `0.40` opacity.
+  * Implemented an expanding `clip-path: circle(...)` mask that dynamically grows the viewport crop from `22vw` to `90vw` as the user scrolls down, mimicking premium, hardware-accelerated video reveal transitions.
+
 
 
 
