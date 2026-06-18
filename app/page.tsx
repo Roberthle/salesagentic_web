@@ -355,6 +355,65 @@ const getLenderInsight = (lender: string): string => {
     return "Specialty or regional lender — limited market data available. Check if this lender has been involved in any recent M&A activity — smaller lessors are being acquired at record rates, and post-acquisition service disruptions create displacement windows.";
 };
 
+const getBuyingTriggerCatalyst = (input: string) => {
+    const text = (input || '').toLowerCase();
+    
+    if (text.includes('hardware') || text.includes('computer') || text.includes('laptop') || text.includes('pc') || text.includes('server') || text.includes('it equipment') || text.includes('network') || text.includes('device')) {
+        return {
+            trigger: "Corporate Office Leases & Hiring Expansion Triggers",
+            catalyst: "Office expansion or new hire onboarding events legally/operationally force companies to purchase bulk hardware packages (laptops, monitors, server racks) to make incoming employees functional.",
+            confidence: "HIGH"
+        };
+    }
+    if (text.includes('insurance') || text.includes('liability') || text.includes('coverage') || text.includes('policy') || text.includes('risk')) {
+        return {
+            trigger: "State Equipment Lien Registries (UCC-1 Filings)",
+            catalyst: "Financiers legally mandate comprehensive commercial insurance policies protecting the asset before leasing firms can release high-value heavy equipment or machinery.",
+            confidence: "CRITICAL"
+        };
+    }
+    if (text.includes('financing') || text.includes('loan') || text.includes('lease') || text.includes('capital') || text.includes('cash') || text.includes('credit') || text.includes('refinance') || text.includes('repayment')) {
+        return {
+            trigger: "Filing Expiration Dates & UCC Lien Maturity Calendars",
+            catalyst: "Approaching maturity dates of existing senior loans force executive teams to seek refinancing opportunities or secondary capital lines to prevent asset lock-outs.",
+            confidence: "HIGH"
+        };
+    }
+    if (text.includes('vehicle') || text.includes('fleet') || text.includes('truck') || text.includes('freight') || text.includes('shipping') || text.includes('logistics') || text.includes('transport') || text.includes('cargo') || text.includes('delivery') || text.includes('moving') || text.includes('customs')) {
+        return {
+            trigger: "US Customs Manifests (Bill of Lading) & DOT Registrations",
+            catalyst: "Inbound heavy freight arrivals or federal logistics license approvals confirm volume surges, operationally forcing immediate delivery fleet capacity expansion.",
+            confidence: "CRITICAL"
+        };
+    }
+    if (text.includes('legal') || text.includes('compliance') || text.includes('law') || text.includes('patent') || text.includes('regulatory') || text.includes('audit') || text.includes('court') || text.includes('lien') || text.includes('suit')) {
+        return {
+            trigger: "Federal Regulatory Sweeps & Courthouse Index Updates",
+            catalyst: "New federal sweeps or courthouse filings show active investigations, mandating that corporate boards immediately retain legal consulting or audit preparation software.",
+            confidence: "HIGH"
+        };
+    }
+    if (text.includes('construction') || text.includes('real estate') || text.includes('building') || text.includes('office') || text.includes('facility') || text.includes('renovation') || text.includes('contract') || text.includes('permit')) {
+        return {
+            trigger: "Municipal Building & Construction Permit Approvals",
+            catalyst: "Zoning regulations and municipal codes legally mandate structural upgrades and environmental inspections before certificate of occupancy is granted.",
+            confidence: "CRITICAL"
+        };
+    }
+    if (text.includes('software') || text.includes('saas') || text.includes('cloud') || text.includes('security') || text.includes('tech') || text.includes('data') || text.includes('hosting') || text.includes('api') || text.includes('database')) {
+        return {
+            trigger: "Federal Security Standard Changes & Database Audits",
+            catalyst: "New compliance standard deadlines (SOC2, GDPR, HIPAA) legally coerce organizations to purchase compliance monitoring software to avoid direct business interruptions.",
+            confidence: "HIGH"
+        };
+    }
+    return {
+        trigger: "Corporate Registrar Action & Capital Shift Logs",
+        catalyst: "Sudden registrar state registrations or asset purchase announcements signal operational shifts, forcing target firms to re-allocate budgets to meet new demand.",
+        confidence: "RECOMMENDED"
+    };
+};
+
 export default function LandingPage() {
     const [leads, setLeads] = useState<Lead[]>([]);
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -376,51 +435,31 @@ export default function LandingPage() {
     const [weeklyDigest, setWeeklyDigest] = useState(true);
     const [outreachDraft, setOutreachDraft] = useState<{ subject: string, body: string } | null>(null);
     const [loadingOutreach, setLoadingOutreach] = useState(false);
+    const [scrollProgress, setScrollProgress] = useState(0);
 
     useEffect(() => {
         fetchLeads();
     }, []);
 
     useEffect(() => {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('in-view');
-                }
-            });
-        }, {
-            threshold: 0.1,
-            rootMargin: '0px 0px -10% 0px'
-        });
-
-        const sections = document.querySelectorAll('.cinematic-section');
-        sections.forEach(section => observer.observe(section));
-
-        // High-performance scroll tracking for background video reveal
         const handleScroll = () => {
-            const container = document.querySelector('.cinematic-container');
+            const container = document.querySelector('.cinematic-scroll-story');
             if (!container) return;
             
             const rect = container.getBoundingClientRect();
             const viewHeight = window.innerHeight;
-            
-            const totalScrollable = rect.height + viewHeight;
-            const scrolledAmount = viewHeight - rect.top;
+            const totalScrollable = rect.height - viewHeight;
+            const scrolledAmount = -rect.top;
             
             let ratio = scrolledAmount / totalScrollable;
             ratio = Math.max(0, Math.min(1, ratio)); // Clamp between 0 and 1
-            
-            const videoContainer = document.querySelector('.cinematic-bg-video-container') as HTMLElement;
-            if (videoContainer) {
-                videoContainer.style.setProperty('--scroll-ratio', ratio.toString());
-            }
+            setScrollProgress(ratio);
         };
 
         window.addEventListener('scroll', handleScroll, { passive: true });
         handleScroll();
 
         return () => {
-            sections.forEach(section => observer.unobserve(section));
             window.removeEventListener('scroll', handleScroll);
         };
     }, []);
@@ -597,17 +636,7 @@ export default function LandingPage() {
 
     return (
         <main className="landing-chassis">
-            <div className="cinematic-bg-video-container">
-                <video 
-                    id="bg-video"
-                    autoPlay 
-                    muted 
-                    loop 
-                    playsInline 
-                    src="/static/bg_video.mp4"
-                />
-                <div className="cinematic-overlay"></div>
-            </div>
+
             <div className="hero-manifesto-container">
                 <div className="hero-bg-zoom"></div>
                 <div className="hero-bg-overlay"></div>
@@ -853,6 +882,25 @@ export default function LandingPage() {
                             </div>
                         )}
                         <form className="trial-form" onSubmit={handleTrialSubmit}>
+                            {whatYouSell && (
+                                <div className="dynamic-trigger-box">
+                                    <div className="dynamic-trigger-header">
+                                        <span className="telemetry-label">[ BUYING TRIGGER ENGINE ]</span>
+                                        <span className="confidence-badge" style={{
+                                            color: getBuyingTriggerCatalyst(whatYouSell).confidence === 'CRITICAL' ? '#ff4a4a' : 
+                                                   getBuyingTriggerCatalyst(whatYouSell).confidence === 'HIGH' ? '#00eeff' : '#cbd5e1'
+                                        }}>[ CONFIDENCE: {getBuyingTriggerCatalyst(whatYouSell).confidence} ]</span>
+                                    </div>
+                                    <div className="dynamic-trigger-row">
+                                        <span className="trigger-label">MATCHED TRIGGER:</span>
+                                        <span className="trigger-value">{getBuyingTriggerCatalyst(whatYouSell).trigger}</span>
+                                    </div>
+                                    <div className="dynamic-trigger-row">
+                                        <span className="trigger-label">MANDATORY CATALYST:</span>
+                                        <span className="trigger-value">{getBuyingTriggerCatalyst(whatYouSell).catalyst}</span>
+                                    </div>
+                                </div>
+                            )}
                             <div className="form-group">
                                 <label>Business Domain URL</label>
                                 <div style={{ fontSize: '0.7rem', color: '#cbd5e1', opacity: 0.85, marginTop: '2px', marginBottom: '4px', lineHeight: '1.2' }}>
@@ -1737,6 +1785,25 @@ export default function LandingPage() {
                             </div>
                         )}
                         <form className="trial-form" onSubmit={handlePaymentSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                            {whatYouSell && (
+                                <div className="dynamic-trigger-box" style={{ gridColumn: 'span 2' }}>
+                                    <div className="dynamic-trigger-header">
+                                        <span className="telemetry-label">[ BUYING TRIGGER ENGINE ]</span>
+                                        <span className="confidence-badge" style={{
+                                            color: getBuyingTriggerCatalyst(whatYouSell).confidence === 'CRITICAL' ? '#ff4a4a' : 
+                                                   getBuyingTriggerCatalyst(whatYouSell).confidence === 'HIGH' ? '#00eeff' : '#cbd5e1'
+                                        }}>[ CONFIDENCE: {getBuyingTriggerCatalyst(whatYouSell).confidence} ]</span>
+                                    </div>
+                                    <div className="dynamic-trigger-row">
+                                        <span className="trigger-label">MATCHED TRIGGER:</span>
+                                        <span className="trigger-value">{getBuyingTriggerCatalyst(whatYouSell).trigger}</span>
+                                    </div>
+                                    <div className="dynamic-trigger-row">
+                                        <span className="trigger-label">MANDATORY CATALYST:</span>
+                                        <span className="trigger-value">{getBuyingTriggerCatalyst(whatYouSell).catalyst}</span>
+                                    </div>
+                                </div>
+                            )}
                             <div className="form-group">
                                 <label>Business Domain URL</label>
                                 <div style={{ fontSize: '0.7rem', color: '#cbd5e1', opacity: 0.85, marginTop: '2px', marginBottom: '4px', lineHeight: '1.2' }}>
@@ -1930,195 +1997,236 @@ export default function LandingPage() {
             )}
 
             {/* Cinematic Scroll Manifesto Sections */}
-            <div className="cinematic-container">
-                {/* ACT 1: THE SATURATION PARADOX */}
-                <section className="cinematic-section" id="manifesto-paradox">
-                    <div className="cinematic-grid">
-                        <div className="cinematic-left">
-                            <div className="section-telemetry">[ ACT_01 // OUTBOUND_BURNOUT ]</div>
-                            <h2 className="cinematic-title">THE SATURATION PARADOX</h2>
-                            <div className="scroll-indicator-bar">
-                                <div className="scroll-progress-line"></div>
-                            </div>
-                        </div>
-                        <div className="cinematic-right">
-                            <p className="cinematic-lead">
-                                Traditional B2B outbound prospecting is fundamentally broken. Blasting massive email databases (like Apollo or ZoomInfo) leads to high spam rates, low deliverability, and generic messaging.
-                            </p>
-                            <p className="cinematic-body">
-                                SalesAgentic shifts the paradigm by monitoring operational triggers in real-time, executing hyper-targeted outreach precisely when buying interest is highest.
-                            </p>
-                        </div>
+            {/* Cinematic Scroll Manifesto Sections */}
+            <div className="cinematic-scroll-story">
+                <div className="cinematic-sticky-frame">
+                    <div className="cinematic-bg-video-container" style={{ transform: `scale(${1 + scrollProgress * 0.08})` }}>
+                        <video 
+                            id="bg-video-act1" 
+                            style={{ opacity: scrollProgress < 0.35 ? 1 : (scrollProgress < 0.38 ? 1 - (scrollProgress - 0.35) / 0.03 : 0) }} 
+                            autoPlay 
+                            muted 
+                            loop 
+                            playsInline 
+                            src="/static/coding_sequences.mp4" 
+                        />
+                        <video 
+                            id="bg-video-act2" 
+                            style={{ 
+                                opacity: scrollProgress < 0.35 ? 0 : 
+                                         (scrollProgress < 0.38 ? (scrollProgress - 0.35) / 0.03 : 
+                                         (scrollProgress < 0.65 ? 1 : 
+                                         (scrollProgress < 0.68 ? 1 - (scrollProgress - 0.65) / 0.03 : 0))) 
+                            }} 
+                            autoPlay 
+                            muted 
+                            loop 
+                            playsInline 
+                            src="/static/calculating_expenses.mp4" 
+                        />
+                        <video 
+                            id="bg-video-act3" 
+                            style={{ opacity: scrollProgress < 0.65 ? 0 : (scrollProgress < 0.68 ? (scrollProgress - 0.65) / 0.03 : 1) }} 
+                            autoPlay 
+                            muted 
+                            loop 
+                            playsInline 
+                            src="/static/corporate_office.mp4" 
+                        />
+                        <div className="cinematic-overlay"></div>
                     </div>
 
-                    <div className="split-comparison-grid">
-                        <div className="split-compare-col obsolete">
-                            <div className="split-compare-header">
-                                <span className="status-label">OBSOLETE</span>
-                                <h3>GENERIC DATABASE BLASTING</h3>
+                    <div className="cinematic-content-overlay">
+                        {/* ACT 1: THE SATURATION PARADOX */}
+                        <div className={`cinematic-act ${scrollProgress >= 0.05 && scrollProgress < 0.35 ? 'active' : ''}`} id="manifesto-paradox">
+                            <div className="cinematic-grid">
+                                <div className="cinematic-left">
+                                    <div className="section-telemetry">[ ACT_01 // OUTBOUND_BURNOUT ]</div>
+                                    <h2 className="cinematic-title">THE SATURATION PARADOX</h2>
+                                    <div className="scroll-indicator-bar">
+                                        <div className="scroll-progress-line" style={{ width: `${Math.min(100, Math.max(0, (scrollProgress - 0.05) / 0.30 * 100))}%` }}></div>
+                                    </div>
+                                </div>
+                                <div className="cinematic-right">
+                                    <p className="cinematic-lead">
+                                        Traditional B2B outbound prospecting is fundamentally broken. Blasting massive email databases (like Apollo or ZoomInfo) leads to high spam rates, low deliverability, and generic messaging.
+                                    </p>
+                                    <p className="cinematic-body">
+                                        SalesAgentic shifts the paradigm by monitoring operational triggers in real-time, executing hyper-targeted outreach precisely when buying interest is highest.
+                                    </p>
+                                </div>
                             </div>
-                            <ul className="split-compare-list">
-                                <li>
-                                    <span className="split-icon cross">✕</span>
-                                    <div>
-                                        <strong>ZoomInfo</strong>
-                                        <p>Outdated employee records, stale directories</p>
+
+                            <div className="split-comparison-grid">
+                                <div className="split-compare-col obsolete">
+                                    <div className="split-compare-header">
+                                        <span className="status-label">OBSOLETE</span>
+                                        <h3>GENERIC DATABASE BLASTING</h3>
                                     </div>
-                                </li>
-                                <li>
-                                    <span className="split-icon cross">✕</span>
-                                    <div>
-                                        <strong>Apollo</strong>
-                                        <p>Mass-scraped, highly saturated lead sheets</p>
+                                    <ul className="split-compare-list">
+                                        <li>
+                                            <span className="split-icon cross">✕</span>
+                                            <div>
+                                                <strong>ZoomInfo</strong>
+                                                <p>Outdated employee records, stale directories</p>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <span className="split-icon cross">✕</span>
+                                            <div>
+                                                <strong>Apollo</strong>
+                                                <p>Mass-scraped, highly saturated lead sheets</p>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <span className="split-icon cross">✕</span>
+                                            <div>
+                                                <strong>Instantly / Outreach</strong>
+                                                <p>Saturated mailboxes, burned domains, spam filters</p>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                    <div className="split-outcome">
+                                        <span className="outcome-label">OUTCOME</span>
+                                        <span className="outcome-val">Low open rates, high domain burn.</span>
                                     </div>
-                                </li>
-                                <li>
-                                    <span className="split-icon cross">✕</span>
-                                    <div>
-                                        <strong>Instantly / Outreach</strong>
-                                        <p>Saturated mailboxes, burned domains, spam filters</p>
+                                </div>
+
+                                <div className="split-compare-col live">
+                                    <div className="split-compare-header">
+                                        <span className="status-label pulse">LIVE RUNNING</span>
+                                        <h3>SALESAGENTIC AUTOPILOT</h3>
                                     </div>
-                                </li>
-                            </ul>
-                            <div className="split-outcome">
-                                <span className="outcome-label">OUTCOME</span>
-                                <span className="outcome-val">Low open rates, high domain burn.</span>
+                                    <ul className="split-compare-list">
+                                        <li>
+                                            <span className="split-icon check">✓</span>
+                                            <div>
+                                                <strong>Corporate Transaction Registry</strong>
+                                                <p>Real-time contract triggers and capital shifts</p>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <span className="split-icon check">✓</span>
+                                            <div>
+                                                <strong>Capital Filing Monitors</strong>
+                                                <p>Scrapes institutional expansion activity instantly</p>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <span className="split-icon check">✓</span>
+                                            <div>
+                                                <strong>Closed-Loop AI Outreach</strong>
+                                                <p>Personalized copywriting & automated response triage</p>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                    <div className="split-outcome success">
+                                        <span className="outcome-label">OUTCOME</span>
+                                        <span className="outcome-val">High connection rates, zero setup, direct pipeline.</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="split-compare-col live">
-                            <div className="split-compare-header">
-                                <span className="status-label pulse">LIVE RUNNING</span>
-                                <h3>SALESAGENTIC AUTOPILOT</h3>
-                            </div>
-                            <ul className="split-compare-list">
-                                <li>
-                                    <span className="split-icon check">✓</span>
-                                    <div>
-                                        <strong>Corporate Transaction Registry</strong>
-                                        <p>Real-time contract triggers and capital shifts</p>
+                        {/* ACT 2: THE COST OF OUTBOUND TECH */}
+                        <div className={`cinematic-act ${scrollProgress >= 0.38 && scrollProgress < 0.65 ? 'active' : ''}`} id="manifesto-roi">
+                            <div className="cinematic-grid">
+                                <div className="cinematic-left">
+                                    <div className="section-telemetry">[ ACT_02 // FINANCIAL_LEAKAGE ]</div>
+                                    <h2 className="cinematic-title">THE COST OF OUTBOUND TECH</h2>
+                                    <div className="scroll-indicator-bar">
+                                        <div className="scroll-progress-line" style={{ width: `${Math.min(100, Math.max(0, (scrollProgress - 0.38) / 0.27 * 100))}%` }}></div>
                                     </div>
-                                </li>
-                                <li>
-                                    <span className="split-icon check">✓</span>
-                                    <div>
-                                        <strong>Capital Filing Monitors</strong>
-                                        <p>Scrapes institutional expansion activity instantly</p>
+                                </div>
+                                <div className="cinematic-right">
+                                    <p className="cinematic-lead">
+                                        Operating a modern sales prospecting stack requires database seats, domain warming platforms, copywriting agents, and continuous CRM operations.
+                                    </p>
+                                    <p className="cinematic-body">
+                                        SalesAgentic replaces your entire sales stack in a single automated loop, saving tens of thousands in licensing and maintenance overhead.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="ledger-container">
+                                <div className="ledger-header">
+                                    <span>REPLACEABLE SALES STACK MODULE</span>
+                                    <span>ESTIMATED ANNUAL LICENSE</span>
+                                </div>
+                                <div className="ledger-row">
+                                    <div className="ledger-desc">
+                                        <span className="ledger-num">01</span>
+                                        <span className="ledger-name">Database Subscriptions (ZoomInfo/Apollo)</span>
                                     </div>
-                                </li>
-                                <li>
-                                    <span className="split-icon check">✓</span>
-                                    <div>
-                                        <strong>Closed-Loop AI Outreach</strong>
-                                        <p>Personalized copywriting & automated response triage</p>
+                                    <div className="ledger-dots"></div>
+                                    <div className="ledger-cost">$25,000 /yr</div>
+                                </div>
+                                <div className="ledger-row">
+                                    <div className="ledger-desc">
+                                        <span className="ledger-num">02</span>
+                                        <span className="ledger-name">Contact Enrichment Platforms (Clay/Clearbit)</span>
                                     </div>
-                                </li>
-                            </ul>
-                            <div className="split-outcome success">
-                                <span className="outcome-label">OUTCOME</span>
-                                <span className="outcome-val">High connection rates, zero setup, direct pipeline.</span>
+                                    <div className="ledger-dots"></div>
+                                    <div className="ledger-cost">$12,000 /yr</div>
+                                </div>
+                                <div className="ledger-row">
+                                    <div className="ledger-desc">
+                                        <span className="ledger-num">03</span>
+                                        <span className="ledger-name">Intent Signal Scrapers (Permits/Hiring/Customs)</span>
+                                    </div>
+                                    <div className="ledger-dots"></div>
+                                    <div className="ledger-cost">$18,000 /yr</div>
+                                </div>
+                                <div className="ledger-row">
+                                    <div className="ledger-desc">
+                                        <span className="ledger-num">04</span>
+                                        <span className="ledger-name">Copywriting Software & LLM API Seats</span>
+                                    </div>
+                                    <div className="ledger-dots"></div>
+                                    <div className="ledger-cost">$8,000 /yr</div>
+                                </div>
+                                <div className="ledger-row">
+                                    <div className="ledger-desc">
+                                        <span className="ledger-num">05</span>
+                                        <span className="ledger-name">Sales Ops & CRM Maintenance</span>
+                                    </div>
+                                    <div className="ledger-dots"></div>
+                                    <div className="ledger-cost">$12,000 /yr</div>
+                                </div>
+                                <div className="ledger-total-row">
+                                    <span className="total-label">ELIMINATED OVERHEAD:</span>
+                                    <span className="total-cost">$75,000+ <span className="total-period">/ YEAR</span></span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </section>
 
-                {/* ACT 2: THE COST OF OUTBOUND TECH */}
-                <section className="cinematic-section" id="manifesto-roi">
-                    <div className="cinematic-grid">
-                        <div className="cinematic-left">
-                            <div className="section-telemetry">[ ACT_02 // FINANCIAL_LEAKAGE ]</div>
-                            <h2 className="cinematic-title">THE COST OF OUTBOUND TECH</h2>
-                            <div className="scroll-indicator-bar">
-                                <div className="scroll-progress-line"></div>
+                        {/* ACT 3: TRIAL CAPACITIES ARE SCARCE */}
+                        <div className={`cinematic-act ${scrollProgress >= 0.68 && scrollProgress < 0.96 ? 'active' : ''}`} id="manifesto-scarcity">
+                            <div className="cinematic-grid">
+                                <div className="cinematic-left">
+                                    <div className="section-telemetry">[ ACT_03 // RESOURCE_CONSTRAINTS ]</div>
+                                    <h2 className="cinematic-title">TRIAL CAPACITIES ARE SCARCE</h2>
+                                    <div className="scroll-indicator-bar">
+                                        <div className="scroll-progress-line" style={{ width: `${Math.min(100, Math.max(0, (scrollProgress - 0.68) / 0.28 * 100))}%` }}></div>
+                                    </div>
+                                </div>
+                                <div className="cinematic-right">
+                                    <p className="cinematic-lead">
+                                        Due to the computing resources required to spin up dedicated domain pools and execute deep capital event checks, we limit signups to 3 new automated sales pipelines per week.
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                        <div className="cinematic-right">
-                            <p className="cinematic-lead">
-                                Operating a modern sales prospecting stack requires database seats, domain warming platforms, copywriting agents, and continuous CRM operations.
-                            </p>
-                            <p className="cinematic-body">
-                                SalesAgentic replaces your entire sales stack in a single automated loop, saving tens of thousands in licensing and maintenance overhead.
-                            </p>
-                        </div>
-                    </div>
 
-                    <div className="ledger-container">
-                        <div className="ledger-header">
-                            <span>REPLACEABLE SALES STACK MODULE</span>
-                            <span>ESTIMATED ANNUAL LICENSE</span>
-                        </div>
-                        <div className="ledger-row">
-                            <div className="ledger-desc">
-                                <span className="ledger-num">01</span>
-                                <span className="ledger-name">Database Subscriptions (ZoomInfo/Apollo)</span>
+                            <div className="cinematic-footer-banner">
+                                <div className="banner-line"></div>
+                                <div className="banner-content">
+                                    SALESAGENTIC: YOUR AUTOMATED SALES PARTNER.
+                                </div>
+                                <div className="banner-line"></div>
                             </div>
-                            <div className="ledger-dots"></div>
-                            <div className="ledger-cost">$25,000 /yr</div>
-                        </div>
-                        <div className="ledger-row">
-                            <div className="ledger-desc">
-                                <span className="ledger-num">02</span>
-                                <span className="ledger-name">Contact Enrichment Platforms (Clay/Clearbit)</span>
-                            </div>
-                            <div className="ledger-dots"></div>
-                            <div className="ledger-cost">$12,000 /yr</div>
-                        </div>
-                        <div className="ledger-row">
-                            <div className="ledger-desc">
-                                <span className="ledger-num">03</span>
-                                <span className="ledger-name">Intent Signal Scrapers (Permits/Hiring/Customs)</span>
-                            </div>
-                            <div className="ledger-dots"></div>
-                            <div className="ledger-cost">$18,000 /yr</div>
-                        </div>
-                        <div className="ledger-row">
-                            <div className="ledger-desc">
-                                <span className="ledger-num">04</span>
-                                <span className="ledger-name">Copywriting Software & LLM API Seats</span>
-                            </div>
-                            <div className="ledger-dots"></div>
-                            <div className="ledger-cost">$8,000 /yr</div>
-                        </div>
-                        <div className="ledger-row">
-                            <div className="ledger-desc">
-                                <span className="ledger-num">05</span>
-                                <span className="ledger-name">Sales Ops & CRM Maintenance</span>
-                            </div>
-                            <div className="ledger-dots"></div>
-                            <div className="ledger-cost">$12,000 /yr</div>
-                        </div>
-                        <div className="ledger-total-row">
-                            <span className="total-label">ELIMINATED OVERHEAD:</span>
-                            <span className="total-cost">$75,000+ <span className="total-period">/ YEAR</span></span>
                         </div>
                     </div>
-                </section>
-
-                {/* ACT 3: TRIAL CAPACITIES ARE SCARCE */}
-                <section className="cinematic-section" id="manifesto-scarcity">
-                    <div className="cinematic-grid">
-                        <div className="cinematic-left">
-                            <div className="section-telemetry">[ ACT_03 // RESOURCE_CONSTRAINTS ]</div>
-                            <h2 className="cinematic-title">TRIAL CAPACITIES ARE SCARCE</h2>
-                            <div className="scroll-indicator-bar">
-                                <div className="scroll-progress-line"></div>
-                            </div>
-                        </div>
-                        <div className="cinematic-right">
-                            <p className="cinematic-lead">
-                                Due to the computing resources required to spin up dedicated domain pools and execute deep capital event checks, we limit signups to 3 new automated sales pipelines per week.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="cinematic-footer-banner">
-                        <div className="banner-line"></div>
-                        <div className="banner-content">
-                            SALESAGENTIC: YOUR AUTOMATED SALES PARTNER.
-                        </div>
-                        <div className="banner-line"></div>
-                    </div>
-                </section>
+                </div>
             </div>
 
             {/* Subscription Teaser Modal */}

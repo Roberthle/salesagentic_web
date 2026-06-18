@@ -432,37 +432,46 @@ body {
 /* =========================================================
    CINEMATIC SCOUT-STYLE MANIFESTO SECTIONS
    ========================================================= */
-.cinematic-bg-video-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: -2;
-    overflow: hidden;
-    pointer-events: none;
-    
-    /* Hardware-accelerated properties, dynamic scroll-ratio */
-    /* Start at 0.12 opacity, fade up to 0.40 as user scrolls through copy sections */
-    opacity: calc(0.12 + (var(--scroll-ratio, 0) * 0.28));
-    
-    /* Scale the video from 1.03 to 1.15 for depth zoom parallax */
-    transform: scale(calc(1.03 + (var(--scroll-ratio, 0) * 0.12)));
-    
-    /* Reveal mask that expands from central area on scroll */
-    clip-path: circle(calc(22vw + (var(--scroll-ratio, 0) * 68vw)) at 50% 50%);
-    
-    transition: opacity 0.15s cubic-bezier(0.16, 1, 0.3, 1), 
-                transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
-                clip-path 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-    
-    will-change: opacity, transform, clip-path;
+.cinematic-scroll-story {
+    position: relative;
+    width: 100%;
+    height: 320vh; /* scroll track for pinning */
+    background: #0a0b0e;
 }
 
-#bg-video {
+.cinematic-sticky-frame {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.cinematic-bg-video-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+    transition: transform 0.1s ease-out;
+    will-change: transform;
+}
+
+.cinematic-bg-video-container video {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: opacity 0.5s ease-in-out;
+    will-change: opacity;
 }
 
 .cinematic-overlay {
@@ -471,34 +480,41 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    /* Dark grid vignette overlay */
-    background: radial-gradient(circle at center, rgba(16, 17, 20, 0.1) 0%, rgba(16, 17, 20, 0.95) 100%);
-    z-index: -1;
+    /* Solid high-contrast vignette overlay to ensure text readability */
+    background: radial-gradient(circle at center, rgba(10, 11, 14, 0.45) 0%, rgba(10, 11, 14, 0.85) 100%);
+    z-index: 2;
 }
-.cinematic-container {
+
+.cinematic-content-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: auto;
+}
+
+.cinematic-act {
+    position: absolute;
     width: 100%;
     max-width: 1200px;
-    margin: 0 auto;
-    padding: 80px 4% 120px 4%;
-    display: flex;
-    flex-direction: column;
-    gap: 120px;
-    z-index: 10;
-    position: relative;
-}
-
-.cinematic-section {
-    position: relative;
-    padding: 0;
-    margin: 0;
+    padding: 0 4%;
     opacity: 0;
     transform: translateY(30px);
-    transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    z-index: 1;
 }
 
-.cinematic-section.in-view {
+.cinematic-act.active {
     opacity: 1;
     transform: translateY(0);
+    pointer-events: auto;
+    z-index: 2;
 }
 
 .cinematic-grid {
@@ -1973,5 +1989,68 @@ body {
 
 
 
+/* =========================================================
+   DYNAMIC BUYING TRIGGER RECOMMENDATION BOX
+   ========================================================= */
+.dynamic-trigger-box {
+    background: rgba(16, 18, 22, 0.75);
+    border: 1px solid rgba(0, 238, 255, 0.2);
+    border-top: 3px solid #00eeff;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 24px;
+    font-family: var(--font-mono, 'JetBrains Mono'), monospace;
+    font-size: 0.8rem;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    transition: all 0.3s ease-in-out;
+}
 
+.dynamic-trigger-box:hover {
+    border-color: rgba(0, 238, 255, 0.4);
+    box-shadow: 0 6px 30px rgba(0, 238, 255, 0.05);
+}
 
+.dynamic-trigger-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+}
+
+.telemetry-label {
+    color: #87a8b9;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+}
+
+.confidence-badge {
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.dynamic-trigger-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+.dynamic-trigger-row:last-child {
+    margin-bottom: 0;
+}
+
+.trigger-label {
+    color: #cbd5e1;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    opacity: 0.7;
+    text-transform: uppercase;
+}
+
+.trigger-value {
+    color: #ffffff;
+    line-height: 1.4;
+}
