@@ -382,6 +382,26 @@ export default function LandingPage() {
     }, []);
 
     useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('in-view');
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -10% 0px'
+        });
+
+        const sections = document.querySelectorAll('.cinematic-section');
+        sections.forEach(section => observer.observe(section));
+
+        return () => {
+            sections.forEach(section => observer.unobserve(section));
+        };
+    }, []);
+
+    useEffect(() => {
         if (selectedLead && trialSuccess) {
             const loadOutreach = async () => {
                 try {
@@ -1874,63 +1894,194 @@ export default function LandingPage() {
                 </div>
             )}
 
-            {/* Copy Manifesto Sections */}
-            <div className="copy-container">
-                <section className="copy-section">
-                    <h2 className="section-title">THE SATURATION PARADOX</h2>
-                    <p className="content-p">
-                        Traditional B2B outbound prospecting is fundamentally broken. Blasting massive email databases (like Apollo or ZoomInfo) leads to high spam rates, low deliverability, and generic messaging. SalesAgentic shifts the paradigm by monitoring operational triggers in real-time, executing hyper-targeted outreach precisely when buying interest is highest.
-                    </p>
+            {/* Cinematic Scroll Manifesto Sections */}
+            <div className="cinematic-container">
+                {/* ACT 1: THE SATURATION PARADOX */}
+                <section className="cinematic-section" id="manifesto-paradox">
+                    <div className="cinematic-grid">
+                        <div className="cinematic-left">
+                            <div className="section-telemetry">[ ACT_01 // OUTBOUND_BURNOUT ]</div>
+                            <h2 className="cinematic-title">THE SATURATION PARADOX</h2>
+                            <div className="scroll-indicator-bar">
+                                <div className="scroll-progress-line"></div>
+                            </div>
+                        </div>
+                        <div className="cinematic-right">
+                            <p className="cinematic-lead">
+                                Traditional B2B outbound prospecting is fundamentally broken. Blasting massive email databases (like Apollo or ZoomInfo) leads to high spam rates, low deliverability, and generic messaging.
+                            </p>
+                            <p className="cinematic-body">
+                                SalesAgentic shifts the paradigm by monitoring operational triggers in real-time, executing hyper-targeted outreach precisely when buying interest is highest.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="split-comparison-grid">
+                        <div className="split-compare-col obsolete">
+                            <div className="split-compare-header">
+                                <span className="status-label">OBSOLETE</span>
+                                <h3>GENERIC DATABASE BLASTING</h3>
+                            </div>
+                            <ul className="split-compare-list">
+                                <li>
+                                    <span className="split-icon cross">✕</span>
+                                    <div>
+                                        <strong>ZoomInfo</strong>
+                                        <p>Outdated employee records, stale directories</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <span className="split-icon cross">✕</span>
+                                    <div>
+                                        <strong>Apollo</strong>
+                                        <p>Mass-scraped, highly saturated lead sheets</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <span className="split-icon cross">✕</span>
+                                    <div>
+                                        <strong>Instantly / Outreach</strong>
+                                        <p>Saturated mailboxes, burned domains, spam filters</p>
+                                    </div>
+                                </li>
+                            </ul>
+                            <div className="split-outcome">
+                                <span className="outcome-label">OUTCOME</span>
+                                <span className="outcome-val">Low open rates, high domain burn.</span>
+                            </div>
+                        </div>
+
+                        <div className="split-compare-col live">
+                            <div className="split-compare-header">
+                                <span className="status-label pulse">LIVE RUNNING</span>
+                                <h3>SALESAGENTIC AUTOPILOT</h3>
+                            </div>
+                            <ul className="split-compare-list">
+                                <li>
+                                    <span className="split-icon check">✓</span>
+                                    <div>
+                                        <strong>Corporate Transaction Registry</strong>
+                                        <p>Real-time contract triggers and capital shifts</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <span className="split-icon check">✓</span>
+                                    <div>
+                                        <strong>Capital Filing Monitors</strong>
+                                        <p>Scrapes institutional expansion activity instantly</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <span className="split-icon check">✓</span>
+                                    <div>
+                                        <strong>Closed-Loop AI Outreach</strong>
+                                        <p>Personalized copywriting & automated response triage</p>
+                                    </div>
+                                </li>
+                            </ul>
+                            <div className="split-outcome success">
+                                <span className="outcome-label">OUTCOME</span>
+                                <span className="outcome-val">High connection rates, zero setup, direct pipeline.</span>
+                            </div>
+                        </div>
+                    </div>
                 </section>
 
-                <section className="copy-section comparison-grid">
-                    <div className="compare-card legacy">
-                        <div className="compare-header">OBSOLETE: Generic Database Blasting</div>
-                        <ul className="compare-list">
-                            <li><span className="cross">✕</span> <b>ZoomInfo:</b> Outdated employee records</li>
-                            <li><span className="cross">✕</span> <b>Apollo:</b> Mass-scraped, saturated lists</li>
-                            <li><span className="cross">✕</span> <b>Instantly/Outreach:</b> Saturated email cadences</li>
-                        </ul>
-                        <div className="compare-outcome">Outcome: Low open rates, high domain burn.</div>
+                {/* ACT 2: THE COST OF OUTBOUND TECH */}
+                <section className="cinematic-section" id="manifesto-roi">
+                    <div className="cinematic-grid">
+                        <div className="cinematic-left">
+                            <div className="section-telemetry">[ ACT_02 // FINANCIAL_LEAKAGE ]</div>
+                            <h2 className="cinematic-title">THE COST OF OUTBOUND TECH</h2>
+                            <div className="scroll-indicator-bar">
+                                <div className="scroll-progress-line"></div>
+                            </div>
+                        </div>
+                        <div className="cinematic-right">
+                            <p className="cinematic-lead">
+                                Operating a modern sales prospecting stack requires database seats, domain warming platforms, copywriting agents, and continuous CRM operations.
+                            </p>
+                            <p className="cinematic-body">
+                                SalesAgentic replaces your entire sales stack in a single automated loop, saving tens of thousands in licensing and maintenance overhead.
+                            </p>
+                        </div>
                     </div>
 
-                    <div className="compare-card live">
-                        <div className="compare-header">LIVE: SalesAgentic Auto-Pilot</div>
-                        <ul className="compare-list">
-                            <li><span className="check">✓</span> <b>Corporate Transaction Registry:</b> Real-time contract triggers and capital shifts</li>
-                            <li><span className="check">✓</span> <b>Capital Filing Monitors:</b> Institutional expansion activity</li>
-                            <li><span className="check">✓</span> <b>Closed-Loop AI Outreach:</b> Personalised copywriting & response triage</li>
-                        </ul>
-                        <div className="compare-outcome success-out">Outcome: High connection rates, zero setup, direct pipeline.</div>
+                    <div className="ledger-container">
+                        <div className="ledger-header">
+                            <span>REPLACEABLE SALES STACK MODULE</span>
+                            <span>ESTIMATED ANNUAL LICENSE</span>
+                        </div>
+                        <div className="ledger-row">
+                            <div className="ledger-desc">
+                                <span className="ledger-num">01</span>
+                                <span className="ledger-name">Database Subscriptions (ZoomInfo/Apollo)</span>
+                            </div>
+                            <div className="ledger-dots"></div>
+                            <div className="ledger-cost">$25,000 /yr</div>
+                        </div>
+                        <div className="ledger-row">
+                            <div className="ledger-desc">
+                                <span className="ledger-num">02</span>
+                                <span className="ledger-name">Contact Enrichment Platforms (Clay/Clearbit)</span>
+                            </div>
+                            <div className="ledger-dots"></div>
+                            <div className="ledger-cost">$12,000 /yr</div>
+                        </div>
+                        <div className="ledger-row">
+                            <div className="ledger-desc">
+                                <span className="ledger-num">03</span>
+                                <span className="ledger-name">Intent Signal Scrapers (Permits/Hiring/Customs)</span>
+                            </div>
+                            <div className="ledger-dots"></div>
+                            <div className="ledger-cost">$18,000 /yr</div>
+                        </div>
+                        <div className="ledger-row">
+                            <div className="ledger-desc">
+                                <span className="ledger-num">04</span>
+                                <span className="ledger-name">Copywriting Software & LLM API Seats</span>
+                            </div>
+                            <div className="ledger-dots"></div>
+                            <div className="ledger-cost">$8,000 /yr</div>
+                        </div>
+                        <div className="ledger-row">
+                            <div className="ledger-desc">
+                                <span className="ledger-num">05</span>
+                                <span className="ledger-name">Sales Ops & CRM Maintenance</span>
+                            </div>
+                            <div className="ledger-dots"></div>
+                            <div className="ledger-cost">$12,000 /yr</div>
+                        </div>
+                        <div className="ledger-total-row">
+                            <span className="total-label">ELIMINATED OVERHEAD:</span>
+                            <span className="total-cost">$75,000+ <span className="total-period">/ YEAR</span></span>
+                        </div>
                     </div>
                 </section>
 
-                <section className="copy-section stack-destroyer">
-                    <h2 className="section-title text-center">THE COST OF OUTBOUND TECH</h2>
-                    <p className="content-p text-center" style={{marginBottom:'30px'}}>
-                        Operating a modern sales prospecting stack requires database seats, domain warming platforms, copywriting agents, and continuous CRM operations. SalesAgentic replaces your entire sales stack in a single automated loop.
-                    </p>
-                    
-                    <div className="roi-grid">
-                        <div className="roi-item"><span>Database Subscriptions (ZoomInfo/Apollo):</span> <span className="cost">$25,000 /yr</span></div>
-                        <div className="roi-item"><span>Contact Enrichment Platforms (Clay/Clearbit):</span> <span className="cost">$12,000 /yr</span></div>
-                        <div className="roi-item"><span>Intent Signal Scrapers (Permits/Hiring/Customs):</span> <span className="cost">$18,000 /yr</span></div>
-                        <div className="roi-item"><span>Copywriting Software & LLM API Seats:</span> <span className="cost">$8,000 /yr</span></div>
-                        <div className="roi-item"><span>Sales Ops & CRM Maintenance:</span> <span className="cost">$12,000 /yr</span></div>
+                {/* ACT 3: TRIAL CAPACITIES ARE SCARCE */}
+                <section className="cinematic-section" id="manifesto-scarcity">
+                    <div className="cinematic-grid">
+                        <div className="cinematic-left">
+                            <div className="section-telemetry">[ ACT_03 // RESOURCE_CONSTRAINTS ]</div>
+                            <h2 className="cinematic-title">TRIAL CAPACITIES ARE SCARCE</h2>
+                            <div className="scroll-indicator-bar">
+                                <div className="scroll-progress-line"></div>
+                            </div>
+                        </div>
+                        <div className="cinematic-right">
+                            <p className="cinematic-lead">
+                                Due to the computing resources required to spin up dedicated domain pools and execute deep capital event checks, we limit signups to 3 new automated sales pipelines per week.
+                            </p>
+                        </div>
                     </div>
-                    
-                    <div className="roi-total">
-                        ELIMINATED OVERHEAD: <span className="big-money">$75,000+</span> / YEAR
-                    </div>
-                </section>
 
-                <section className="copy-section scarcity-block">
-                    <h2 className="section-title critical-alert">TRIAL CAPACITIES ARE SCARCE</h2>
-                    <p className="content-p">
-                        Due to the computing resources required to spin up dedicated domain pools and execute deep capital event checks, we limit signups to 3 new automated sales pipelines per week. 
-                    </p>
-                    <div className="footer-tagline">
-                        SALESAGENTIC: YOUR AUTOMATED SALES PARTNER.
+                    <div className="cinematic-footer-banner">
+                        <div className="banner-line"></div>
+                        <div className="banner-content">
+                            SALESAGENTIC: YOUR AUTOMATED SALES PARTNER.
+                        </div>
+                        <div className="banner-line"></div>
                     </div>
                 </section>
             </div>
