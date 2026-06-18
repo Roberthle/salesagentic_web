@@ -267,6 +267,19 @@ I have refactored the lead inspection details panel on the sales agentic homepag
 * **Safari/WebKit DOMException Selector Fix**:
   * Replaced fragile attribute placeholder queries (`input[placeholder="..."]`) with standard element ID selectors (`trial-domain-input` and `payment-domain-input`) to prevent DOMException errors on Safari/iOS browsers.
 
+---
+
+## 20. Docker Deployment SQLite Open Fix (June 18, 2026)
+
+* **Production Runner Copy Steps Added**:
+  * Modified [Dockerfile](file:///Users/robertle/salesagentic_web/Dockerfile) to explicitly copy the `data/` directory and the `start-production.js` initialization script into the final `runner` stage.
+  * This guarantees that when Next.js starts up inside the container, `/app/data/registry.db` is available to be copied/seeded to `/data/registry.db` on Render's persistent volume if the database is not already initialized.
+* **Verification & Testing**:
+  * Pushed changes to GitHub repository and triggered a deployment build via the Render deploy hook.
+  * Verified that the server returned 200 OK after booting.
+  * Ran end-to-end integration test by submitting a trial registration POST to `/api/checkout` with `amazon.com` and `ale@amazon.com` details, verifying it now successfully registers and updates the database with zero SQLITE_CANTOPEN errors.
+
+
 
 
 
