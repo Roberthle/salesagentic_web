@@ -279,6 +279,21 @@ I have refactored the lead inspection details panel on the sales agentic homepag
   * Verified that the server returned 200 OK after booting.
   * Ran end-to-end integration test by submitting a trial registration POST to `/api/checkout` with `amazon.com` and `ale@amazon.com` details, verifying it now successfully registers and updates the database with zero SQLITE_CANTOPEN errors.
 
+---
+
+## 21. Cinematic Scout-Style Redesign (June 18, 2026)
+
+* **Cinematic Scroll Manifestos**:
+  * Replaced static, boxed copy panels with full-width scroll sections (`.cinematic-container` and `.cinematic-section`) to mimic the premium layout of [Scout Motors](https://www.scoutmotors.com).
+  * Added side-by-side splits with large bold typography and thin vertical separators.
+  * Added telemetry headers (e.g. `[ ACT_01 // OUTBOUND_BURNOUT ]`) and progress lines using JetBrains Mono and Inter.
+* **Scroll-Responsive Animations**:
+  * Configured a React `IntersectionObserver` hook inside `LandingPage` that automatically applies the `.in-view` class to copy sections as the user scrolls.
+  * Staged transition-group classes for clean, hardware-accelerated opacity fades and vertical translation animations.
+* **Redesigned Obsolete vs Live & Ledger Grid**:
+  * Rebuilt the comparison card as a single grid element containing obsolete and running-live sections separated by ultra-fine lines.
+  * Restructured the ROI tech cost block into an elegant monospaced vertical ledger, including dashed connection leaders and a highlighted total row for eliminated overhead.
+
 
 
 
