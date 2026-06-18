@@ -799,6 +799,9 @@ export default function LandingPage() {
                         <form className="trial-form" onSubmit={handleTrialSubmit}>
                             <div className="form-group">
                                 <label>Business Domain URL</label>
+                                <div style={{ fontSize: '0.7rem', color: '#cbd5e1', opacity: 0.85, marginTop: '2px', marginBottom: '4px', lineHeight: '1.2' }}>
+                                    We crawl this domain to customize your AI outreach agent. Fake or unauthenticated domains are blocked. This is like adding a full sales team that works for only you on your pipeline.
+                                </div>
                                 <input 
                                     type="text" 
                                     className="trial-input" 
@@ -1679,6 +1682,9 @@ export default function LandingPage() {
                         <form className="trial-form" onSubmit={handlePaymentSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                             <div className="form-group">
                                 <label>Business Domain URL</label>
+                                <div style={{ fontSize: '0.7rem', color: '#cbd5e1', opacity: 0.85, marginTop: '2px', marginBottom: '4px', lineHeight: '1.2' }}>
+                                    We crawl this domain to customize your AI outreach agent. Fake or unauthenticated domains are blocked. This is like adding a full sales team that works for only you on your pipeline.
+                                </div>
                                 <input 
                                     type="text" 
                                     className="trial-input" 

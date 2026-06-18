@@ -236,4 +236,15 @@ I have refactored the lead inspection details panel on the sales agentic homepag
   * Clicking "Sign Up & Pay to Unlock Live Database" below the leads table or clicking target locked rows scrolls smoothly to the bottom payment gateway, pre-populating fields and focusing inputs.
   * Handled payment submissions to automatically activate sandbox trials (`trialSuccess(true)`) and fetch matching leads instantly if the user subscribes directly from the bottom form.
 
+---
+
+## 18. Domain Ownership & Verification Copywriting (June 17, 2026)
+
+* **Business Domain Value Proposition**:
+  * Integrated detailed helper texts directly beneath the `Business Domain URL` field labels in both the top Trial Registration and bottom Payment Checkout forms.
+  * Explained that the business domain is crawled to construct and customize the user's dedicated outbound AI agent.
+  * Articulated the value proposition using the exact copywriting: *"This is like adding a full sales team that works for only you on your pipeline."*
+  * Clarified the verification policy stating that fake, unauthenticated, or mismatched domains are blocked from launching campaigns.
+
+
 
