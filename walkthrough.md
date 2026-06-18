@@ -245,6 +245,10 @@ I have refactored the lead inspection details panel on the sales agentic homepag
   * Explained that the business domain is crawled to construct and customize the user's dedicated outbound AI agent.
   * Articulated the value proposition using the exact copywriting: *"This is like adding a full sales team that works for only you on your pipeline."*
   * Clarified the verification policy stating that fake, unauthenticated, or mismatched domains are blocked from launching campaigns.
+* **Header Simplification & Decluttering**:
+  * Replaced the busy top-level headers and tagline with a single focused, high-converting headline: *"Just type in what you sell, and our AI gets to work for you."*
+  * Combined "Sales Agentic AI" and "7 Day Pipeline Builder" into a clean sub-title row to save vertical space and improve clarity.
+
 
 ---
 
