@@ -246,5 +246,21 @@ I have refactored the lead inspection details panel on the sales agentic homepag
   * Articulated the value proposition using the exact copywriting: *"This is like adding a full sales team that works for only you on your pipeline."*
   * Clarified the verification policy stating that fake, unauthenticated, or mismatched domains are blocked from launching campaigns.
 
+---
+
+## 19. Mobile Responsiveness Optimization (June 17, 2026)
+
+* **Responsive Typography & Spacing**:
+  * Scaled down the main hero `.headline` font-size to `2.2rem` on screens below `1024px` to eliminate wrapping and overflow issues.
+  * Compressed `.hero-manifesto` outer paddings to `30px 15px` on mobile for better layout margins.
+* **Stacking Grid Containers**:
+  * Retooled the main leads feed `.registry-grid` to stack in a single column (`1fr` layout) on mobile/tablets, removing the side-by-side desktop layout constraint.
+  * Stretched the leads table card and detailed information card to full-width vertically.
+* **Flexible Signup & Checkout Forms**:
+  * Set the `.trial-form` to stack input fields vertically on smaller viewports.
+  * Set the `.trial-form-container` to automatically center with responsive margins (`margin: 20px auto 0 auto !important`), overriding desktop negative-margin offsets.
+  * Configured credit card entry fields (Card number, MM/YY, CVC) to stack on small screens (`max-width: 480px`) to prevent squished layouts.
+
+
 
 
