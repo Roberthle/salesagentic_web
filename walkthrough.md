@@ -307,6 +307,25 @@ I have refactored the lead inspection details panel on the sales agentic homepag
   * Styled `.cinematic-bg-video-container` to scale up smoothly from `1.03` to `1.15` (parallax zoom) and expand its visibility from `0.12` to `0.40` opacity.
   * Implemented an expanding `clip-path: circle(...)` mask that dynamically grows the viewport crop from `22vw` to `90vw` as the user scrolls down, mimicking premium, hardware-accelerated video reveal transitions.
 
+---
+
+## 23. Scout-Style Pinned Scroll-Video Crossfades & Real-Time Dynamic Buying Triggers (June 18, 2026)
+
+* **Scout-Style Sticky Viewport Pinned Sequence**:
+  * Replaced the page-wide fixed background video with a localized scroll track container (`.cinematic-scroll-story` styled to `320vh`).
+  * Pinned a sticky viewport container (`.cinematic-sticky-frame`) that locks the screen while scrolling through the Manifesto, keeping the background video fully visible.
+  * Completely removed the abstract circular `clip-path` mask to replicate Scout Motors' immersive presentation.
+* **Card-Specific Background Video Crossfading**:
+  * Layered three distinct optimized H.264 MP4 videos served locally from `public/static/`:
+    * Act 1 (burnout): `coding_sequences.mp4` (shows code sequences and developer keyboard).
+    * Act 2 (tech stack ledger): `calculating_expenses.mp4` (shows expense calculations and financial numbers).
+    * Act 3 (scarcity / automated team): `corporate_office.mp4` (shows smiling professionals collaborating in a high-rise office).
+  * Programmed high-performance scroll-driven crossfades that transition video opacities smoothly at the `0.35` and `0.68` scroll progress milestones.
+  * Synced monospaced progress indicators to grow in length relative to scroll progress.
+* **Dynamic Buying Trigger Form Integration**:
+  * Implemented a real-time keyword classifier (`getBuyingTriggerCatalyst`) that matches user product categories (IT/hardware, insurance, finance/loans, logistics/fleet, legal/compliance, construction/real-estate, software/SaaS) to specific compliance triggers and forced-buy catalysts.
+  * Rendered the dynamic recommendation panel (`.dynamic-trigger-box`) styled in monospaced glassmorphism at the top of both the Sandbox Trial Form and Checkout payment form, updating instantly as the user types.
+
 
 
 
