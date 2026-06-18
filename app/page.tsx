@@ -484,7 +484,7 @@ export default function LandingPage() {
             const paymentSec = document.getElementById('payment-section');
             if (paymentSec) {
                 paymentSec.scrollIntoView({ behavior: 'smooth' });
-                const domainInput = document.querySelector('#payment-section input[placeholder="e.g. amazon.com"]') as HTMLInputElement;
+                const domainInput = document.getElementById('payment-domain-input') as HTMLInputElement;
                 if (domainInput) {
                     setTimeout(() => domainInput.focus(), 800);
                 }
@@ -804,6 +804,7 @@ export default function LandingPage() {
                                     We crawl this domain to customize your AI outreach agent. Fake or unauthenticated domains are blocked. This is like adding a full sales team that works for only you on your pipeline.
                                 </div>
                                 <input 
+                                    id="trial-domain-input"
                                     type="text" 
                                     className="trial-input" 
                                     placeholder="e.g. amazon.com" 
@@ -979,7 +980,7 @@ export default function LandingPage() {
                                                         const paymentSec = document.getElementById('payment-section');
                                                         if (paymentSec) {
                                                             paymentSec.scrollIntoView({ behavior: 'smooth' });
-                                                            const domainInput = document.querySelector('#payment-section input[placeholder="e.g. amazon.com"]') as HTMLInputElement;
+                                                            const domainInput = document.getElementById('payment-domain-input') as HTMLInputElement;
                                                             if (domainInput) {
                                                                 setTimeout(() => domainInput.focus(), 800);
                                                             }
@@ -1004,7 +1005,7 @@ export default function LandingPage() {
                                         const paymentSec = document.getElementById('payment-section');
                                         if (paymentSec) {
                                             paymentSec.scrollIntoView({ behavior: 'smooth' });
-                                            const domainInput = document.querySelector('#payment-section input[placeholder="e.g. amazon.com"]') as HTMLInputElement;
+                                            const domainInput = document.getElementById('payment-domain-input') as HTMLInputElement;
                                             if (domainInput) {
                                                 setTimeout(() => domainInput.focus(), 800);
                                             }
@@ -1687,6 +1688,7 @@ export default function LandingPage() {
                                     We crawl this domain to customize your AI outreach agent. Fake or unauthenticated domains are blocked. This is like adding a full sales team that works for only you on your pipeline.
                                 </div>
                                 <input 
+                                    id="payment-domain-input"
                                     type="text" 
                                     className="trial-input" 
                                     placeholder="e.g. amazon.com" 
@@ -1966,7 +1968,7 @@ export default function LandingPage() {
                                 setShowTeaserModal(false);
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                                 // Focus the first input field
-                                const input = document.querySelector('input[placeholder="e.g. amazon.com"]') as HTMLInputElement;
+                                const input = document.getElementById('trial-domain-input') as HTMLInputElement;
                                 if (input) {
                                     setTimeout(() => input.focus(), 150);
                                 }

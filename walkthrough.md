@@ -264,6 +264,8 @@ I have refactored the lead inspection details panel on the sales agentic homepag
   * Set the `.trial-form` to stack input fields vertically on smaller viewports.
   * Set the `.trial-form-container` to automatically center with responsive margins (`margin: 20px auto 0 auto !important`), overriding desktop negative-margin offsets.
   * Configured credit card entry fields (Card number, MM/YY, CVC) to stack on small screens (`max-width: 480px`) to prevent squished layouts.
+* **Safari/WebKit DOMException Selector Fix**:
+  * Replaced fragile attribute placeholder queries (`input[placeholder="..."]`) with standard element ID selectors (`trial-domain-input` and `payment-domain-input`) to prevent DOMException errors on Safari/iOS browsers.
 
 
 
