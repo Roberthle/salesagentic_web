@@ -1655,5 +1655,63 @@ body {
 }
 
 
+/* =========================================================
+   MOBILE RESPONSIVENESS OVERRIDES
+   ========================================================= */
+
+@media (max-width: 1023px) {
+    .headline {
+        font-size: 2.2rem !important;
+        letter-spacing: -0.5px !important;
+        margin-bottom: 15px !important;
+    }
+    .sub-headline {
+        font-size: 1rem !important;
+        margin-top: 5px !important;
+    }
+    .trial-form-container {
+        margin: 20px auto 0 auto !important;
+        max-width: 100% !important;
+        padding: 20px !important;
+    }
+    .trial-form {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 15px !important;
+    }
+    .registry-grid {
+        grid-template-columns: 1fr !important;
+        gap: 25px !important;
+    }
+    .registry-table-card, .detail-panel-card {
+        max-height: none !important;
+    }
+    .detail-panel-card {
+        max-height: 700px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-manifesto {
+        padding: 30px 15px 40px 15px !important;
+    }
+    .digest-outbox-grid {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
+    .payment-chassis {
+        margin-top: 30px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Stack checkout credit card fields vertically on small devices */
+    .payment-chassis div[style*="gridTemplateColumns"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
+
 
 
