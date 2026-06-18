@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: salesagentic-web
+    env: docker
+    plan: starter
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: REGISTRY_DB_PATH
+        value: /data/registry.db
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+    disk:
+      name: registry-db-volume
+      mountPath: /data
+      sizeGB: 1
