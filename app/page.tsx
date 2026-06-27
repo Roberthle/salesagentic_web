@@ -846,9 +846,12 @@ export default function LandingPage() {
                             <circle cx="17" cy="17" r="3" fill="url(#goldGrad)" style={{ filter: 'url(#goldGlow)' }} />
                         </svg>
                     </Link>
-                    <h1 className="headline" style={{ fontSize: '2.5rem', margin: '0 0 12px 0', background: 'linear-gradient(180deg, #fff 0%, #aaa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: '900', textTransform: 'none', letterSpacing: '0px', textAlign: 'center', lineHeight: '1.2' }}>
-                        Just type in what you sell, and our AI gets to work for you.
+                    <h1 style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(1px, 1px, 1px, 1px)', whiteSpace: 'nowrap', border: '0' }}>
+                        SalesAgentic.ai | Automated B2B Sales Pipeline & Lead Generation
                     </h1>
+                    <h2 className="headline" style={{ fontSize: '2.5rem', margin: '0 0 12px 0', background: 'linear-gradient(180deg, #fff 0%, #aaa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: '900', textTransform: 'none', letterSpacing: '0px', textAlign: 'center', lineHeight: '1.2' }}>
+                        Just type in what you sell, and our AI gets to work for you.
+                    </h2>
                     <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: '#00eeff', letterSpacing: '2px', textTransform: 'uppercase', margin: 0, textShadow: '0 0 8px rgba(0,238,255,0.3)' }}>
                         Sales Agentic AI * 7 Day Pipeline Builder
                     </p>
